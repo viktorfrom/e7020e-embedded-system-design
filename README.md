@@ -10,6 +10,11 @@ The goal is to package this is in a simple and safe to use way for users to inte
 ### Limitations
 There is no sure way to calibrate this device as the project team does not have access to a real industry-grade breathalyzer. Thus this device can only very roughly estimate the BAC of a person's breath and SHOULD NOT be trusted in any serious situation where it is critical to know the real BAC.
 
+## Components
+* [Murata CMWX1ZZABZ-078](https://www.digikey.com/product-detail/en/murata-electronics/CMWX1ZZABZ-078/490-16143-1-ND/6834151)
+* [Grove - Alchohol sensor](https://www.elfa.se/en/grove-alcohol-sensor-seeed-studio-101020044/p/30069826)
+* Some sort of display like [LCD-S301C31TR ](https://www.digikey.se/product-detail/en/lumex-opto-components-inc/LCD-S301C31TR/67-1788-ND/469773)
+
 ## Requirements
 * Rustup 1.14.0+
 
