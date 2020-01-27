@@ -1,4 +1,4 @@
-# E7030E Embedded System Design
+# E7020E Embedded System Design
 Project designed and written in Rust in conjunction with the E7020E Embedded System Design course at University of Technology. 
 
 ## Requirements
