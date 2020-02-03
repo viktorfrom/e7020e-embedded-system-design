@@ -50,7 +50,6 @@ itmdump 0.3.1
 ```
 
 ### cargo-binutils
-
 ```
 rustup component add llvm-tools-preview
 ```
