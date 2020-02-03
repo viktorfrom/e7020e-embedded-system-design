@@ -13,6 +13,7 @@ There is no sure way to calibrate this device as the project team does not have 
 ## Components / shopping list
 * [Murata CMWX1ZZABZ-078](https://www.digikey.com/product-detail/en/murata-electronics/CMWX1ZZABZ-078/490-16143-1-ND/6834151)
 * [Grove - Alchohol sensor](https://www.elfa.se/en/grove-alcohol-sensor-seeed-studio-101020044/p/30069826)
+* [4-pin connector to sensor](https://www.elfa.se/en/grove-universal-pin-connector-seeed-studio-110990030-10pcs-pack/p/30069939)
 * [SSD1306 based display](https://cdon.se/hem-tradgard/oled-display-0-96-tum-vit-128x64-pixlar-ssd1306-spi-p50506639)
 * [65100516121 USB mini-B](https://www.elfa.se/en/socket-horizontal-mini-usb-smd-wuerth-elektronik-65100516121/p/14257103)
 * [Pin headers](https://www.elfa.se/en/wr-phd-straight-male-pcb-header-through-hole-54mm-wuerth-elektronik-61300611121/p/30024526)
