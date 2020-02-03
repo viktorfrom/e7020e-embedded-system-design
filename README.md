@@ -18,7 +18,7 @@ There is no sure way to calibrate this device as the project team does not have 
 * [65100516121 USB mini-B](https://www.elfa.se/en/socket-horizontal-mini-usb-smd-wuerth-elektronik-65100516121/p/14257103)
 * [Pin headers](https://www.elfa.se/en/wr-phd-straight-male-pcb-header-through-hole-54mm-wuerth-elektronik-61300611121/p/30024526)
 * [LM1117IMP-ADJ voltage regulator](https://www.elfa.se/en/ldo-voltage-regulator-800ma-sot-223-texas-instruments-lm1117imp-adj-nopb/p/30019193)
-* [2x Electrolytic capacitors 10uF](https://www.elfa.se/en/radial-electrolytic-capacitor-10uf-20-50vdc-rnd-components-rnd-150ksk050m100d11p50/p/30146087)
+* [2x Electrolytic capacitors 10uF](https://www.elfa.se/en/aluminium-electrolytic-capacitor-10-uf-50-20-vs-panasonic-eee1ha100wr/p/30108011)
 * [2x Buttons](https://www.elfa.se/en/print-key-50-ma-12-vdc-te-connectivity-1825910/p/13566549)
 
 ## Requirements
