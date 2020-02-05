@@ -845,4 +845,113 @@ NoConn ~ 8300 2750
 NoConn ~ 8300 2650
 NoConn ~ 7500 2050
 NoConn ~ 7600 2050
+$Comp
+L Connector:Conn_01x04_Male Breathalizer1
+U 1 1 5E3B0FFE
+P 4650 6000
+F 0 "Breathalizer1" H 4758 6281 50  0000 C CNN
+F 1 "Conn_01x04_Male" H 4758 6190 50  0000 C CNN
+F 2 "" H 4650 6000 50  0001 C CNN
+F 3 "~" H 4650 6000 50  0001 C CNN
+	1    4650 6000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5E3BA901
+P 5200 5800
+F 0 "#PWR?" H 5200 5550 50  0001 C CNN
+F 1 "GND" H 5205 5627 50  0000 C CNN
+F 2 "" H 5200 5800 50  0001 C CNN
+F 3 "" H 5200 5800 50  0001 C CNN
+	1    5200 5800
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5E3C65A3
+P 5200 6000
+F 0 "#PWR?" H 5200 5850 50  0001 C CNN
+F 1 "+3.3V" H 5215 6173 50  0000 C CNN
+F 2 "" H 5200 6000 50  0001 C CNN
+F 3 "" H 5200 6000 50  0001 C CNN
+	1    5200 6000
+	0    1    1    0   
+$EndComp
+NoConn ~ 4850 6100
+Text Label 5200 6200 0    50   ~ 0
+DAT
+Wire Wire Line
+	4850 6200 5200 6200
+Wire Wire Line
+	4850 6000 5200 6000
+Wire Wire Line
+	4850 5900 5150 5900
+Wire Wire Line
+	5150 5900 5150 5800
+Wire Wire Line
+	5150 5800 5200 5800
+$Comp
+L power:GND #PWR?
+U 1 1 5E3EB6DF
+P 3700 5400
+F 0 "#PWR?" H 3700 5150 50  0001 C CNN
+F 1 "GND" H 3705 5227 50  0000 C CNN
+F 2 "" H 3700 5400 50  0001 C CNN
+F 3 "" H 3700 5400 50  0001 C CNN
+	1    3700 5400
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5E3EBE04
+P 3950 5700
+F 0 "#PWR?" H 3950 5550 50  0001 C CNN
+F 1 "+3.3V" H 3965 5873 50  0000 C CNN
+F 2 "" H 3950 5700 50  0001 C CNN
+F 3 "" H 3950 5700 50  0001 C CNN
+	1    3950 5700
+	0    1    1    0   
+$EndComp
+Text Label 3500 5950 0    50   ~ 0
+D0
+$Comp
+L Connector:Conn_01x07_Male SSD1306-SPI
+U 1 1 5E3E9C8E
+P 2950 6050
+F 0 "SSD1306-SPI" H 3058 6531 50  0000 C CNN
+F 1 "Conn_01x07_Male" H 3058 6440 50  0000 C CNN
+F 2 "" H 2950 6050 50  0001 C CNN
+F 3 "~" H 2950 6050 50  0001 C CNN
+	1    2950 6050
+	1    0    0    -1  
+$EndComp
+Text Label 3500 6250 0    50   ~ 0
+DC
+Text Label 3500 6050 0    50   ~ 0
+D1
+Wire Wire Line
+	3150 5750 3700 5750
+Wire Wire Line
+	3700 5750 3700 5400
+Wire Wire Line
+	3150 5850 3800 5850
+Wire Wire Line
+	3800 5850 3800 5700
+Wire Wire Line
+	3800 5700 3950 5700
+Wire Wire Line
+	3150 5950 3500 5950
+Wire Wire Line
+	3150 6050 3500 6050
+Wire Wire Line
+	3150 6250 3500 6250
+Text Label 3500 6150 0    50   ~ 0
+RES
+Text Label 3500 6350 0    50   ~ 0
+CS
+Wire Wire Line
+	3150 6350 3500 6350
+Wire Wire Line
+	3150 6150 3500 6150
 $EndSCHEMATC
