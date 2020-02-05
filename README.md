@@ -104,7 +104,7 @@ rustup target add thumbv7em-none-eabihf
 ## Authors
 * Viktor From - vikfro-6@student.ltu.se - [viktorfrom](https://github.com/viktorfrom)
 * Mark Hakansson - marhak-6@student.ltu.se - [markhakansson](https://github.com/markhakansson)
-* Kyle Drysdale 
+* Kyle Drysdale - kyldry-5@student.ltu.se  - [KyleLouisDrysdale](https://github.com/KyleLouisDrysdale)
 
 ## License
 Licensed under the MIT license. See [LICENSE](LICENSE) for details.
