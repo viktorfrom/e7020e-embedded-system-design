@@ -82,6 +82,16 @@ brew cask install gcc-arm-embedded
 
 brew install minicom openocd
 ```
+Navigate to the cargo config file in the Nucleo folder,
+```
+cd .config
+vim config
+```
+and make sure the following lines are uncommented,
+```
+runner = "arm-none-eabi-gdb -q -x openocd.gdb"
+target = "thumbv7em-none-eabihf" # Cortex-M4F and Cortex-M7F (with FPU)
+```
 
 ### Build it
 For the F3, we'll to use the thumbv7em-none-eabihf target. Before cross compiling you have to download pre-compiled version of the standard library (a reduced version of it actually) for your target. That's done using rustup:
