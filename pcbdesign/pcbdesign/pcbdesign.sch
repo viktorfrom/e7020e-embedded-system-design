@@ -14,7 +14,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L cmwx1zzabz-078:CMWX1ZZABZ-078 U1
+L pcbdesign-rescue:CMWX1ZZABZ-078-cmwx1zzabz-078 U1
 U 1 1 5E390DC8
 P 7400 3550
 F 0 "U1" H 7400 1961 50  0000 C CNN
@@ -453,7 +453,7 @@ F 3 "~" H 1300 1800 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L pcbdesign:LM1117ADJ U2
+L pcbdesign-rescue:LM1117ADJ-pcbdesign U2
 U 1 1 5E4410B4
 P 3750 2450
 F 0 "U2" H 3750 1385 50  0000 C CNN
@@ -843,7 +843,7 @@ RES
 Text Label 3500 6350 0    50   ~ 0
 CS
 Wire Wire Line
-	3150 6350 3500 6350
+	3150 6350 3400 6350
 Wire Wire Line
 	3150 6150 3500 6150
 $Comp
@@ -1098,5 +1098,30 @@ F 2 "" H 5800 3200 50  0001 C CNN
 F 3 "" H 5800 3200 50  0001 C CNN
 	1    5800 3200
 	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5E3CC9AD
+P 3400 6500
+F 0 "R?" H 3470 6546 50  0000 L CNN
+F 1 "10K" H 3470 6455 50  0000 L CNN
+F 2 "" V 3330 6500 50  0001 C CNN
+F 3 "~" H 3400 6500 50  0001 C CNN
+	1    3400 6500
+	1    0    0    -1  
+$EndComp
+Connection ~ 3400 6350
+Wire Wire Line
+	3400 6350 3500 6350
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5E3CD027
+P 3400 6650
+F 0 "#PWR?" H 3400 6500 50  0001 C CNN
+F 1 "+3.3V" H 3415 6823 50  0000 C CNN
+F 2 "" H 3400 6650 50  0001 C CNN
+F 3 "" H 3400 6650 50  0001 C CNN
+	1    3400 6650
+	-1   0    0    1   
 $EndComp
 $EndSCHEMATC
