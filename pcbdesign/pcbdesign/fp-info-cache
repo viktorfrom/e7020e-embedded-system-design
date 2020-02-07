@@ -1,4 +1,4 @@
-16933354796886490
+16934935880097490
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -75270,3 +75270,10 @@ iot lora sigfox
 0
 57
 57
+pcbdesign
+PKM13EPYH4000_piezo
+
+
+0
+2
+2
