@@ -247,14 +247,13 @@ X 2 2 200 0 100 L 50 50 0 1 P
 ENDDRAW
 ENDDEF
 #
-# cmwx1zzabz-078_CMWX1ZZABZ-078
+# pcbdesign-rescue_CMWX1ZZABZ-078-cmwx1zzabz-078
 #
-DEF cmwx1zzabz-078_CMWX1ZZABZ-078 U 0 20 Y Y 1 F N
+DEF pcbdesign-rescue_CMWX1ZZABZ-078-cmwx1zzabz-078 U 0 20 Y Y 1 F N
 F0 "U" -700 1450 50 H V C CNN
-F1 "cmwx1zzabz-078_CMWX1ZZABZ-078" 650 1450 50 H V C CNN
+F1 "pcbdesign-rescue_CMWX1ZZABZ-078-cmwx1zzabz-078" 650 1450 50 H V C CNN
 F2 "RF_Module:CMWX1ZZABZ" 0 0 50 H I C CNN
 F3 "" 2450 -1500 50 H I C CNN
-ALIAS CMWX1ZZABZ-091
 $FPLIST
  CMWX1ZZABZ*
 $ENDFPLIST
@@ -320,11 +319,11 @@ X DBG_SX1276_DI03 9 900 -900 100 L 50 50 1 1 B
 ENDDRAW
 ENDDEF
 #
-# pcbdesign_LM1117ADJ
+# pcbdesign-rescue_LM1117ADJ-pcbdesign
 #
-DEF pcbdesign_LM1117ADJ U 0 40 Y Y 1 F N
+DEF pcbdesign-rescue_LM1117ADJ-pcbdesign U 0 40 Y Y 1 F N
 F0 "U" 0 0 50 H V C CNN
-F1 "pcbdesign_LM1117ADJ" 0 -100 50 H V C CNN
+F1 "pcbdesign-rescue_LM1117ADJ-pcbdesign" 0 -100 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
