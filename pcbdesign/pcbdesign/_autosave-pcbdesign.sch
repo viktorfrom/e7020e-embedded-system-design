@@ -413,7 +413,7 @@ $EndComp
 Wire Wire Line
 	6500 3950 6050 3950
 Wire Wire Line
-	6050 3950 6050 4150
+	6050 3950 6050 4050
 Connection ~ 6050 4150
 Wire Wire Line
 	6050 4150 6050 4400
@@ -427,11 +427,6 @@ Wire Wire Line
 	6050 4150 6350 4150
 Wire Wire Line
 	6350 4150 6350 4500
-Wire Wire Line
-	6050 5000 6050 5200
-Wire Wire Line
-	6050 5000 6050 4700
-Connection ~ 6050 5000
 NoConn ~ 9400 3100
 $Comp
 L Connector:USB_B_Mini J2
@@ -1081,40 +1076,30 @@ F 3 "" H 5800 3200 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	5000 4300 5100 4300
-Wire Wire Line
-	5100 4300 5100 4400
-Wire Wire Line
-	5000 4300 4900 4300
-Wire Wire Line
-	4900 4300 4900 4400
-Connection ~ 5000 4300
-Wire Wire Line
-	4900 4900 5000 4900
-Wire Wire Line
-	5000 4900 5000 5000
-Wire Wire Line
-	5000 5000 6050 5000
-Connection ~ 5000 4900
-Wire Wire Line
-	5000 4900 5100 4900
-Wire Wire Line
-	5000 4150 5000 4300
-Wire Wire Line
-	5000 4150 6050 4150
+	6050 4700 6050 5000
 $Comp
-L Switch:SW_Push_Dual SW1
-U 1 1 5E5793EA
-P 4900 4600
-F 0 "SW1" V 4946 4312 50  0000 R CNN
-F 1 "SW_Push_Dual" V 4855 4312 50  0000 R CNN
-F 2 "" H 4900 4800 50  0001 C CNN
-F 3 "~" H 4900 4800 50  0001 C CNN
-	1    4900 4600
-	0    -1   -1   0   
+L Switch:SW_Push SW1
+U 1 1 5E63CCBC
+P 5150 4550
+F 0 "SW1" V 5104 4698 50  0000 L CNN
+F 1 "SW_Push" V 5195 4698 50  0000 L CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T_NO_6x6mm_H9.5mm" H 5150 4750 50  0001 C CNN
+F 3 "~" H 5150 4750 50  0001 C CNN
+	1    5150 4550
+	0    1    1    0   
 $EndComp
 Wire Wire Line
-	4900 4900 4900 4800
+	5150 4350 5150 4050
 Wire Wire Line
-	5100 4900 5100 4800
+	5150 4050 6050 4050
+Connection ~ 6050 4050
+Wire Wire Line
+	6050 4050 6050 4150
+Wire Wire Line
+	5150 4750 5150 5000
+Wire Wire Line
+	5150 5000 6050 5000
+Connection ~ 6050 5000
+Wire Wire Line
+	6050 5000 6050 5200
 $EndSCHEMATC
