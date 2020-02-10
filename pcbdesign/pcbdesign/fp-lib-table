@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name pcbdesign)(type KiCad)(uri ${KIPRJMOD}/pcbdesign.pretty/pcbdesign.pretty)(options "")(descr ""))
+  (lib (name ProjectPCB)(type KiCad)(uri ${KIPRJMOD}/ProjectPCB.pretty)(options "")(descr ""))
+)

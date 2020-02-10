@@ -14,155 +14,16 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L cmwx1zzabz-078:CMWX1ZZABZ-078 U1
+L pcbdesign-rescue:CMWX1ZZABZ-078-cmwx1zzabz-078 U1
 U 1 1 5E390DC8
 P 7400 3550
 F 0 "U1" H 7400 1961 50  0000 C CNN
 F 1 "CMWX1ZZABZ-078" H 7400 1870 50  0000 C CNN
-F 2 "RF_Module:CMWX1ZZABZ" H 7400 3550 50  0001 C CNN
+F 2 "ProjectPCB:CMWX1ZZABZ_longer_pads" H 7400 3550 50  0001 C CNN
 F 3 "https://wireless.murata.com/RFM/data/type_abz.pdf" H 9850 2050 50  0001 C CNN
 	1    7400 3550
 	1    0    0    -1  
 $EndComp
-$Comp
-L Device:C C2
-U 1 1 5E392739
-P 1950 4200
-F 0 "C2" H 2065 4246 50  0000 L CNN
-F 1 "100n" H 2065 4155 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric" H 1988 4050 50  0001 C CNN
-F 3 "~" H 1950 4200 50  0001 C CNN
-	1    1950 4200
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:C C5
-U 1 1 5E392DF0
-P 3300 4200
-F 0 "C5" H 3415 4246 50  0000 L CNN
-F 1 "100n" H 3415 4155 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric" H 3338 4050 50  0001 C CNN
-F 3 "~" H 3300 4200 50  0001 C CNN
-	1    3300 4200
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:C C6
-U 1 1 5E3930A1
-P 3750 4200
-F 0 "C6" H 3865 4246 50  0000 L CNN
-F 1 "100n" H 3865 4155 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric" H 3788 4050 50  0001 C CNN
-F 3 "~" H 3750 4200 50  0001 C CNN
-	1    3750 4200
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:C C3
-U 1 1 5E393437
-P 2400 4200
-F 0 "C3" H 2515 4246 50  0000 L CNN
-F 1 "100n" H 2515 4155 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric" H 2438 4050 50  0001 C CNN
-F 3 "~" H 2400 4200 50  0001 C CNN
-	1    2400 4200
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:C C4
-U 1 1 5E3938B4
-P 2850 4200
-F 0 "C4" H 2965 4246 50  0000 L CNN
-F 1 "100n" H 2965 4155 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric" H 2888 4050 50  0001 C CNN
-F 3 "~" H 2850 4200 50  0001 C CNN
-	1    2850 4200
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:GND #PWR0101
-U 1 1 5E399258
-P 3050 4850
-F 0 "#PWR0101" H 3050 4600 50  0001 C CNN
-F 1 "GND" H 3055 4677 50  0000 C CNN
-F 2 "" H 3050 4850 50  0001 C CNN
-F 3 "" H 3050 4850 50  0001 C CNN
-	1    3050 4850
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3050 4650 3050 4850
-Connection ~ 3050 4650
-$Comp
-L power:+3.3V #PWR0102
-U 1 1 5E39BDD6
-P 3050 3650
-F 0 "#PWR0102" H 3050 3500 50  0001 C CNN
-F 1 "+3.3V" H 3065 3823 50  0000 C CNN
-F 2 "" H 3050 3650 50  0001 C CNN
-F 3 "" H 3050 3650 50  0001 C CNN
-	1    3050 3650
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3050 3800 3050 3650
-Connection ~ 3050 3800
-Wire Wire Line
-	3050 4650 3300 4650
-Wire Wire Line
-	1950 4650 2400 4650
-Wire Wire Line
-	1950 3800 2400 3800
-Wire Wire Line
-	3050 3800 3300 3800
-Wire Wire Line
-	4200 4050 4200 3800
-Wire Wire Line
-	3750 4050 3750 3800
-Connection ~ 3750 3800
-Wire Wire Line
-	3750 3800 4200 3800
-Wire Wire Line
-	3300 4050 3300 3800
-Connection ~ 3300 3800
-Wire Wire Line
-	3300 3800 3750 3800
-Wire Wire Line
-	3300 4350 3300 4650
-Connection ~ 3300 4650
-Wire Wire Line
-	3300 4650 3750 4650
-Wire Wire Line
-	3750 4350 3750 4650
-Connection ~ 3750 4650
-Wire Wire Line
-	3750 4650 4200 4650
-Wire Wire Line
-	4200 4350 4200 4650
-Wire Wire Line
-	2850 4350 2850 4650
-Connection ~ 2850 4650
-Wire Wire Line
-	2850 4650 3050 4650
-Wire Wire Line
-	2850 4050 2850 3800
-Connection ~ 2850 3800
-Wire Wire Line
-	2850 3800 3050 3800
-Wire Wire Line
-	2400 4050 2400 3800
-Connection ~ 2400 3800
-Wire Wire Line
-	2400 3800 2850 3800
-Wire Wire Line
-	1950 4050 1950 3800
-Wire Wire Line
-	1950 4350 1950 4650
-Wire Wire Line
-	2400 4350 2400 4650
-Connection ~ 2400 4650
-Wire Wire Line
-	2400 4650 2850 4650
 Text Label 5750 3800 0    50   ~ 0
 SWCLK
 Text Label 5750 3600 0    50   ~ 0
@@ -440,7 +301,7 @@ F 3 "~" H 1300 1800 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L pcbdesign:LM1117ADJ U2
+L pcbdesign-rescue:LM1117ADJ-pcbdesign U2
 U 1 1 5E4410B4
 P 3750 2450
 F 0 "U2" H 3750 1385 50  0000 C CNN
@@ -856,17 +717,6 @@ F 3 "" H 6750 1150 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:C C18
-U 1 1 5E500834
-P 4200 4200
-F 0 "C18" H 4315 4246 50  0000 L CNN
-F 1 "100n" H 4315 4155 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric" H 4238 4050 50  0001 C CNN
-F 3 "~" H 4200 4200 50  0001 C CNN
-	1    4200 4200
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:GND #PWR0122
 U 1 1 5E3B87DE
 P 8850 5500
@@ -1038,7 +888,7 @@ U 1 1 5E5528D6
 P 5250 2950
 F 0 "BZ1" H 5255 3240 50  0000 C CNN
 F 1 "Buzzer" H 5255 3149 50  0000 C CNN
-F 2 "pcbdesign:PKM13EPYH4000_piezo" V 5225 3050 50  0001 C CNN
+F 2 "ProjectPCB:PKM13EPYH4000_piezo" V 5225 3050 50  0001 C CNN
 F 3 "~" V 5225 3050 50  0001 C CNN
 	1    5250 2950
 	-1   0    0    -1  
