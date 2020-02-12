@@ -1,4 +1,4 @@
-16924124084096273
+16928868647942273
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -65975,6 +65975,20 @@ Potentiometer vertical Vishay T73YP
 3
 3
 ProjectPCB
+BEER
+
+
+0
+0
+0
+ProjectPCB
+BEER_SMALL
+
+
+0
+0
+0
+ProjectPCB
 CMWX1ZZABZ
 https://wireless.murata.com/RFM/data/type_abz.pdf
 iot lora sigfox
@@ -65995,6 +66009,13 @@ PKM13EPYH4000_piezo
 0
 2
 2
+ProjectPCB
+helpmeimdyinginside
+
+
+0
+0
+0
 RF
 Skyworks_SKY13575_639LF
 http://www.skyworksinc.com/uploads/documents/SKY13575_639LF_203270D.pdf

@@ -750,7 +750,6 @@ D1
 Wire Wire Line
 	8300 3550 8700 3550
 NoConn ~ 6500 3050
-NoConn ~ 6500 2950
 Text Label 8700 3050 0    50   ~ 0
 DC
 Text Label 8700 3150 0    50   ~ 0
@@ -961,14 +960,71 @@ Wire Wire Line
 Wire Wire Line
 	1050 2250 1050 2450
 $Comp
-L Connector:USB_B_Mini J2
-U 1 1 5E434262
+L Connector:USB_B_Micro J2
+U 1 1 5E4500AF
 P 1150 1850
 F 0 "J2" H 1207 2317 50  0000 C CNN
-F 1 "USB_B_Mini" H 1207 2226 50  0000 C CNN
-F 2 "Connector_USB:USB_Mini-B_Wuerth_65100516121_Horizontal" H 1300 1800 50  0001 C CNN
+F 1 "USB_B_Micro" H 1207 2226 50  0000 C CNN
+F 2 "Connector_USB:USB_Micro-B_Wuerth_629105150521" H 1300 1800 50  0001 C CNN
 F 3 "~" H 1300 1800 50  0001 C CNN
 	1    1150 1850
 	1    0    0    -1  
 $EndComp
+$Comp
+L Device:C C2
+U 1 1 5E477EBE
+P 3200 3950
+F 0 "C2" H 3315 3996 50  0000 L CNN
+F 1 "0.1u" H 3315 3905 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 3238 3800 50  0001 C CNN
+F 3 "~" H 3200 3950 50  0001 C CNN
+	1    3200 3950
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR0101
+U 1 1 5E477EC4
+P 3200 4600
+F 0 "#PWR0101" H 3200 4350 50  0001 C CNN
+F 1 "GND" H 3205 4427 50  0000 C CNN
+F 2 "" H 3200 4600 50  0001 C CNN
+F 3 "" H 3200 4600 50  0001 C CNN
+	1    3200 4600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3200 3350 3200 3450
+Wire Wire Line
+	3200 4100 3200 4400
+$Comp
+L Switch:SW_Push SW2
+U 1 1 5E477ED0
+P 2300 3950
+F 0 "SW2" V 2254 4098 50  0000 L CNN
+F 1 "SW_Push" V 2345 4098 50  0000 L CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T_NO_6x6mm_H9.5mm" H 2300 4150 50  0001 C CNN
+F 3 "~" H 2300 4150 50  0001 C CNN
+	1    2300 3950
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	2300 3750 2300 3450
+Wire Wire Line
+	2300 3450 3200 3450
+Connection ~ 3200 3450
+Wire Wire Line
+	2300 4150 2300 4400
+Wire Wire Line
+	2300 4400 3200 4400
+Connection ~ 3200 4400
+Wire Wire Line
+	3200 4400 3200 4600
+Wire Wire Line
+	3200 3450 3200 3800
+Text Label 3200 3350 0    50   ~ 0
+BUTTON
+Text Label 6200 2950 0    50   ~ 0
+BUTTON
+Wire Wire Line
+	6500 2950 6200 2950
 $EndSCHEMATC

@@ -1,4 +1,4 @@
-update=Tue 11 Feb 2020 01:37:52 PM CET
+update=Wed 12 Feb 2020 03:10:03 PM CET
 last_client=kicad
 [general]
 version=1
@@ -15,7 +15,7 @@ ERC_TestSimilarLabels=1
 [pcbnew]
 version=1
 PageLayoutDescrFile=
-LastNetListRead=pcbdesign.net
+LastNetListRead=pcbdesign1.net
 CopperLayerCount=2
 BoardThickness=1.6
 AllowMicroVias=0
@@ -57,7 +57,7 @@ OthersTextUpright=1
 SolderMaskClearance=0.051
 SolderMaskMinWidth=0.25
 SolderPasteClearance=0
-SolderPasteRatio=-0
+SolderPasteRatio=0
 [pcbnew/Layer.F.Cu]
 Name=F.Cu
 Type=0
