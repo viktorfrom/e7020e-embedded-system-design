@@ -19,7 +19,7 @@ There is no sure way to calibrate this device as the project team does not have 
 * [Pin headers](https://www.elfa.se/en/wr-phd-straight-male-pcb-header-through-hole-54mm-wuerth-elektronik-61300611121/p/30024526)
 * [LM1117IMP-ADJ voltage regulator](https://www.elfa.se/en/ldo-voltage-regulator-800ma-sot-223-texas-instruments-lm1117imp-adj-nopb/p/30019193)
 * [2x Electrolytic capacitors 10uF](https://www.elfa.se/en/aluminium-electrolytic-capacitor-10-uf-50-20-vs-panasonic-eee1ha100wr/p/30108011)
-* [1x Buttons](https://www.elfa.se/en/print-key-50-ma-12-vdc-te-connectivity-1437565/p/13566525)
+* [2x Buttons](https://www.elfa.se/en/print-key-50-ma-12-vdc-te-connectivity-1437565/p/13566525)
 * [1x Speaker](https://www.elfa.se/en/piezo-buzzer-70-db-khz-15-murata-pkm13epyh4000-a0/p/13787082)
 * [1x Antenna](https://www.elfa.se/en/micro-coaxial-straight-socket-micro-coaxial-connector-50ohm-6ghz-molex-73412-0110/p/30076410)
 
