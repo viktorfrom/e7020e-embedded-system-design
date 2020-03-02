@@ -3,15 +3,14 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
+extern crate panic_semihosting;
 
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
+use stm32l0xx_hal as stm32;
 
-#[entry]
-fn main() -> ! {
-    hprintln!("Hello, world!").unwrap();
-    loop {
-        continue;
-    }
-}
+#[rtfm::app(device = stm32l0xx_hal::pac)]
+const APP: () = {
+    // code here
+};
+
