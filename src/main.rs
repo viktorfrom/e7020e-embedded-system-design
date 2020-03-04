@@ -12,5 +12,6 @@ use stm32l0xx_hal as stm32;
 #[rtfm::app(device = stm32l0xx_hal::pac)]
 const APP: () = {
     // code here
+    #[init]
+    fn init(_: init::Context) {}
 };
-
