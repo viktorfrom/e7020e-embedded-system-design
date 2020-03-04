@@ -220,8 +220,6 @@ dependencies = [
  "heapless 0.5.3",
  "longfi-device",
  "nb",
- "panic-halt",
- "panic-itm",
  "panic-semihosting",
  "postcard",
  "stm32l0xx-hal",
@@ -365,21 +363,6 @@ dependencies = [
  "quote 0.6.13",
  "rand",
  "syn 0.15.44",
-]
-
-[[package]]
-name = "panic-halt"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de96540e0ebde571dc55c73d60ef407c653844e6f9a1e2fdbd40c07b9252d812"
-
-[[package]]
-name = "panic-itm"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98830d17a95587207e41edaa3009b143d326ce134b0e3538ac98246a67d66cc3"
-dependencies = [
- "cortex-m 0.6.2",
 ]
 
 [[package]]
