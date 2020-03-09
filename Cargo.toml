@@ -15,8 +15,8 @@ embedded-hal            = "0.2.3"
 crc16                   = "0.4.0"
 heapless                = "0.5.1"
 postcard                = "0.4.2"
-longfi-device           = { git = "https://git.grepit.se/grepit/lora-rs.git" }
-communicator            = { git = "https://git.grepit.se/grepit/communicator.git" }
+#longfi-device           = { git = "https://git.grepit.se/grepit/lora-rs.git" }
+#communicator            = { git = "https://git.grepit.se/grepit/communicator.git" }
 
 [dependencies.cortex-m]
 version         = "0.6.2"
