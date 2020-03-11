@@ -24,13 +24,14 @@ use stm32l0xx_hal::{
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {
-        INT: stm32::EXTI,
+        EXT: pac::EXTI,
         BUTTON: gpioa::PA4<Input<PullUp>>,
         BUZZER: gpioa::PA3<Output<PushPull>>,
         #[init(false)]
         BUZZER_ON: bool,
         #[init(false)]
-        STATE: bool
+        STATE: bool,
+        TIMER: timer::Timer<pac::TIM2>
     }
 
     #[init]
@@ -38,6 +39,10 @@ const APP: () = {
         // Configure the clock.
         let mut rcc = cx.device.RCC.freeze(Config::hsi16());
         let mut syscfg = syscfg::SYSCFG::new(cx.device.SYSCFG, &mut rcc);
+
+        // Timeout is the frequency I think?
+        let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.hz(), &mut rcc);
+        tim2.listen();
 
         // Acquire the GPIOB peripheral. This also enables the clock for GPIOB in
         // the RCC register.
@@ -73,32 +78,46 @@ const APP: () = {
 
         // Return the initialised resources.
         init::LateResources {
-            INT: exti,
+            EXT: exti,
             BUTTON: button,
             BUZZER: buzzer,
+            TIMER: tim2
         }
     }
  
-    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, INT], spawn = [button_event])]
+    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT], spawn = [button_event])]
     fn exti4_15(cx: exti4_15::Context) {
-        cx.resources.INT.clear_irq(cx.resources.BUTTON.pin_number());
+        cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
         cx.spawn.button_event().unwrap();        
+    }
+
+    #[task(binds = TIM2, priority = 1, resources = [BUZZER, STATE, TIMER, BUZZER_ON])]
+    fn tim2(cx: tim2::Context) {
+        cx.resources.TIMER.clear_irq();
+        
+        if *cx.resources.STATE {
+            if *cx.resources.BUZZER_ON {
+                *cx.resources.BUZZER_ON = false;
+                cx.resources.BUZZER.set_high().unwrap();
+            } else {
+                *cx.resources.BUZZER_ON = true;
+                cx.resources.BUZZER.set_low().unwrap();
+            }
+        }
     }
 
     #[task(priority = 1, resources = [BUZZER, STATE])]
     fn button_event(cx: button_event::Context) {
         if *cx.resources.STATE {
-            hprintln!("set high").unwrap();
             *cx.resources.STATE = false;
         } else {
-            hprintln!("set low").unwrap();
             *cx.resources.STATE = true;
         }
     }
 
     #[task(resources = [BUZZER, BUZZER_ON])]
     fn buzzer_on(cx: buzzer_on::Context) {
-
+        
     }
 
     #[task(resources = [BUZZER, BUZZER_ON])]
