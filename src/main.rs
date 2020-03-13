@@ -7,7 +7,6 @@ extern crate panic_semihosting;
 use stm32l0xx_hal as hal;
 use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
-use rtfm::cyccnt::{Instant, U32Ext as _};
 
 use stm32l0xx_hal::{
     adc,
@@ -21,7 +20,7 @@ use stm32l0xx_hal::{
     stm32
 };
 
-#[rtfm::app(device = stm32l0xx_hal::pac, monotonic = rtfm::cyccnt::CYCCNT, peripherals = true)]
+#[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {
         INT: stm32::EXTI,
@@ -29,8 +28,6 @@ const APP: () = {
         BUZZER: gpioa::PA3<Output<PushPull>>,
         #[init(false)]
         BUZZER_ON: bool,
-        #[init([0; 512])]
-        BUFFER: [u8; 512],
         #[init(false)]
         STATE: bool
     }
@@ -40,6 +37,7 @@ const APP: () = {
         // Configure the clock.
         let mut rcc = cx.device.RCC.freeze(Config::hsi16());
         let mut syscfg = syscfg::SYSCFG::new(cx.device.SYSCFG, &mut rcc);
+        //let mut systick = cx.device::SYST;
 
         // Configure ADC
         // let mut adc = adc::Adc::new(cx.device.ADC, &mut rcc);
