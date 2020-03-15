@@ -36,7 +36,9 @@ const APP: () = {
         let gpiob = cx.device.GPIOB.split(&mut rcc);
         let gpioc = cx.device.GPIOC.split(&mut rcc);
 
-        let nss = gpiob.pb12.into_push_pull_output();
+        let mut cs = gpiob.pb12.into_push_pull_output();
+        cs.set_low(); // not sure if needed, did not try without it
+
         let sck = gpiob.pb13;
         let mosi = gpiob.pb15;
 
@@ -51,14 +53,13 @@ const APP: () = {
             );
 
         let dc = gpiob.pb8.into_push_pull_output();
-        let res = gpiob.pb9.into_push_pull_output();
+        let mut res = gpiob.pb9.into_push_pull_output();
 
-        let mut reset = gpioa.pa3.into_push_pull_output();
         let mut delay = Delay::new(cx.core.SYST, rcc.clocks);
 
         let mut disp: GraphicsMode<_> = Builder::new().connect_spi(spi, dc).into();
 
-        disp.reset(&mut reset, &mut delay).unwrap();
+        disp.reset(&mut res, &mut delay).unwrap();
         disp.init().unwrap();
     
         // Top side
