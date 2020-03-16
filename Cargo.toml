@@ -17,6 +17,7 @@ heapless                = "0.5.1"
 postcard                = "0.4.2"
 #longfi-device           = { git = "https://git.grepit.se/grepit/lora-rs.git" }
 #communicator            = { git = "https://git.grepit.se/grepit/communicator.git" }
+#ssd1306 = "0.3.0-alpa.1"
 ssd1306 = "0.2.6"
 
 [dependencies.embedded-graphics]
