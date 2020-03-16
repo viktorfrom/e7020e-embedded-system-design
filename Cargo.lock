@@ -129,7 +129,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "338089f42c427b86394a5ee60ff321da23a5c89c9d89514c829687b26359fcff"
 
 [[package]]
-name = "e7030e-embedded-system-design"
+name = "e7020e-embedded-system-design"
 version = "0.1.0"
 dependencies = [
  "aligned",
