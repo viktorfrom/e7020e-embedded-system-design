@@ -27,7 +27,10 @@ const APP: () = {
         BUTTON: gpioa::PA4<Input<PullUp>>,
         HEATER: gpioa::PA5<Output<PushPull>>,
         DAT: gpioa::PA2<Analog>,
-        ADC: adc::Adc
+        ADC: adc::Adc,
+        TIMER: timer::Timer<pac::TIM2>,
+        #[init(false)]
+        BREATHALYZER_ON: bool
     }
 
     #[init]
@@ -41,6 +44,10 @@ const APP: () = {
         let gpioa = cx.device.GPIOA.split(&mut rcc);
         let gpiob = cx.device.GPIOB.split(&mut rcc);
         let gpioc = cx.device.GPIOC.split(&mut rcc);
+
+        // Configure timer
+        let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
+        tim2.listen();
 
         // Configure ADC2 (PA2)
         let adc = adc::Adc::new(cx.device.ADC, &mut rcc);
@@ -71,22 +78,31 @@ const APP: () = {
             BUTTON: button,
             HEATER: heater,
             DAT: dat,
-            ADC: adc
+            ADC: adc,
+            TIMER: tim2
         }
     }
 
-    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT], spawn = [breathalyzer])]
+    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT, BREATHALYZER_ON])]
     fn exti4_15(cx: exti4_15::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
-        cx.spawn.breathalyzer().unwrap();        
+        *cx.resources.BREATHALYZER_ON = !*cx.resources.BREATHALYZER_ON;
+    }
+
+    #[task(binds = TIM2, priority = 2, resources = [ADC, DAT, BREATHALYZER_ON])]
+    fn breathalyzer(cx: breathalyzer::Context) {
+        if *cx.resources.BREATHALYZER_ON {
+            let value: u16 = cx.resources.ADC.read(cx.resources.DAT).unwrap();
+            hprintln!("Value: {:#}", value).unwrap();            
+        }
     }
 
     // Read alchohol sensor
-    #[task(priority = 1, resources = [ADC, DAT])]
+/*     #[task(priority = 1, resources = [ADC, DAT])]
     fn breathalyzer(cx: breathalyzer::Context) {
         let value: u16 = cx.resources.ADC.read(cx.resources.DAT).unwrap();
         hprintln!("Value: {:#}", value).unwrap();
-    }
+    } */
 
     // Interrupt handlers used to dispatch software tasks
     extern "C" {
