@@ -19,6 +19,10 @@ use hal::{
     timer::{Timer},
 };
 
+use embedded_graphics::prelude::*;
+use embedded_graphics::Drawing;
+use embedded_graphics::{text_6x8, egcircle, icoord};
+
 #[app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {
@@ -85,6 +89,14 @@ const APP: () = {
         disp.set_pixel(0, 1, 1);
         disp.set_pixel(0, 2, 1);
         disp.set_pixel(0, 3, 1);
+
+
+
+        let c = egcircle!((20, 20), 8, fill = Some(1u8));
+        let t = text_6x8!("Hello Rust!", fill = Some(20u8)).translate(icoord!(20, 16));
+
+        disp.draw(&mut c);
+        disp.draw(&mut t);
     
         disp.flush().unwrap();
 
