@@ -97,13 +97,6 @@ const APP: () = {
         }
     }
 
-    // Read alchohol sensor
-/*     #[task(priority = 1, resources = [ADC, DAT])]
-    fn breathalyzer(cx: breathalyzer::Context) {
-        let value: u16 = cx.resources.ADC.read(cx.resources.DAT).unwrap();
-        hprintln!("Value: {:#}", value).unwrap();
-    } */
-
     // Interrupt handlers used to dispatch software tasks
     extern "C" {
         fn USART4_USART5();
