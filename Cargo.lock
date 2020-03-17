@@ -139,7 +139,7 @@ dependencies = [
  "cortex-m-rtfm",
  "cortex-m-semihosting",
  "crc16",
- "embedded-graphics 0.5.1",
+ "embedded-graphics 0.6.0-beta.2",
  "embedded-hal",
  "heapless",
  "nb",
@@ -162,9 +162,12 @@ dependencies = [
 
 [[package]]
 name = "embedded-graphics"
-version = "0.5.1"
+version = "0.6.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "252cbe910fbd453d227e45232e2787b68b6bdff9a8fd2a1a79d0b10cf44e5d45"
+checksum = "b0caffad8b63cad8e39df1aad5c875ab4fb8d77ed1d30834d6ca9c175ffd2b32"
+dependencies = [
+ "byteorder",
+]
 
 [[package]]
 name = "embedded-hal"
