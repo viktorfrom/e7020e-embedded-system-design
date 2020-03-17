@@ -5,7 +5,7 @@
 extern crate panic_semihosting;
 
 use stm32l0xx_hal as hal;
-use cortex_m::peripheral::DWT;
+use cortex_m::peripheral::{DWT, syst, Peripherals};
 use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
@@ -17,19 +17,21 @@ use stm32l0xx_hal::{
     rcc::Config,
     spi,
     syscfg,
-    stm32
+    stm32,
+    timer
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {
-        INT: stm32::EXTI,
+        EXT: pac::EXTI,
         BUTTON: gpioa::PA4<Input<PullUp>>,
         BUZZER: gpioa::PA3<Output<PushPull>>,
         #[init(false)]
         BUZZER_ON: bool,
         #[init(false)]
-        STATE: bool
+        STATE: bool,
+        TIMER: timer::Timer<pac::TIM2>
     }
 
     #[init]
@@ -37,10 +39,10 @@ const APP: () = {
         // Configure the clock.
         let mut rcc = cx.device.RCC.freeze(Config::hsi16());
         let mut syscfg = syscfg::SYSCFG::new(cx.device.SYSCFG, &mut rcc);
-        //let mut systick = cx.device::SYST;
 
-        // Configure ADC
-        // let mut adc = adc::Adc::new(cx.device.ADC, &mut rcc);
+        // Timeout is the frequency I think?
+        let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.hz(), &mut rcc);
+        tim2.listen();
 
         // Acquire the GPIOB peripheral. This also enables the clock for GPIOB in
         // the RCC register.
@@ -76,38 +78,52 @@ const APP: () = {
 
         // Return the initialised resources.
         init::LateResources {
-            INT: exti,
+            EXT: exti,
             BUTTON: button,
             BUZZER: buzzer,
+            TIMER: tim2
         }
     }
  
-    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, INT], spawn = [button_event])]
+    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT], spawn = [button_event])]
     fn exti4_15(cx: exti4_15::Context) {
-        cx.resources.INT.clear_irq(cx.resources.BUTTON.pin_number());
+        cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
         cx.spawn.button_event().unwrap();        
     }
 
-    #[task(priority = 1, resources = [BUZZER])]
-    fn button_event(cx: button_event::Context) {
-        static mut state: bool = true;
-        if *state {
-            hprintln!("set high").unwrap();
-            *state = false;
-        } else {
-            hprintln!("set low").unwrap();
-            *state = true;
+    #[task(binds = TIM2, priority = 1, resources = [BUZZER, STATE, TIMER, BUZZER_ON])]
+    fn tim2(cx: tim2::Context) {
+        cx.resources.TIMER.clear_irq();
+        
+        if *cx.resources.STATE {
+            if *cx.resources.BUZZER_ON {
+                *cx.resources.BUZZER_ON = false;
+                cx.resources.BUZZER.set_high().unwrap();
+            } else {
+                *cx.resources.BUZZER_ON = true;
+                cx.resources.BUZZER.set_low().unwrap();
+            }
         }
     }
 
-/*     #[]
-    fn buzzer_on(cx: buzzer_on::Context) {
-
+    #[task(priority = 1, resources = [BUZZER, STATE])]
+    fn button_event(cx: button_event::Context) {
+        if *cx.resources.STATE {
+            *cx.resources.STATE = false;
+        } else {
+            *cx.resources.STATE = true;
+        }
     }
 
+    #[task(resources = [BUZZER, BUZZER_ON])]
+    fn buzzer_on(cx: buzzer_on::Context) {
+        
+    }
+
+    #[task(resources = [BUZZER, BUZZER_ON])]
     fn buzzer_off(cx: buzzer_off::Context) {
 
-    } */
+    }
 
     // Interrupt handlers used to dispatch software tasks
     extern "C" {
