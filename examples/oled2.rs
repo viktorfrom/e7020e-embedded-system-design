@@ -72,10 +72,19 @@ const APP: () = {
         disp.reset(&mut res, &mut delay).unwrap();
         disp.init().unwrap();
     
-        let t = Text::new("Hello Rust!", Point::new(20, 16))
+        disp.clear();
+
+
+
+
+
+        let t = Text::new("©", Point::new(20, 16))
         .into_styled(TextStyle::new(Font6x8, BinaryColor::On));
     
-        t.draw(&mut disp).unwrap();
+        t.draw(&mut disp);
+        
+        disp.flush().unwrap();
+
 
         // Return the initialised resources.
     }
