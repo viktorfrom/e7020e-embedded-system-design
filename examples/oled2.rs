@@ -4,7 +4,7 @@
 extern crate panic_semihosting;
 
 use rtfm::app;
-use ssd1306::{prelude::*, Builder, mode::TerminalMode};
+use ssd1306::{mode::TerminalMode, prelude::*, Builder};
 use stm32l0xx_hal as hal;
 
 use hal::{
@@ -14,13 +14,12 @@ use hal::{
     pac,
     prelude::*,
     rcc::Config,
-    spi::{self, Mode, Phase, Polarity, NoMiso},
+    spi::{self, Mode, NoMiso, Phase, Polarity},
     syscfg,
-    timer::{Timer},
+    timer::Timer,
 };
 
 use embedded_graphics::{
-    egtext,
     fonts::{Font6x8, Text},
     pixelcolor::BinaryColor,
     prelude::*,
@@ -28,10 +27,11 @@ use embedded_graphics::{
     style::{PrimitiveStyle, TextStyle},
 };
 
+use embedded_graphics::{primitives::Rectangle, style::PrimitiveStyleBuilder};
+
 #[app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
-    struct Resources {
-    }
+    struct Resources {}
 
     #[init]
     fn init(cx: init::Context) {
@@ -52,44 +52,58 @@ const APP: () = {
         let mosi = gpiob.pb15;
 
         // Initialise the SPI peripheral.
-        let mut spi = cx.device
-           .SPI2
-           .spi(
-                (sck, NoMiso, mosi), 
-                spi::MODE_0, 
-                1_000_000.hz(), 
-                &mut rcc
-            );
+        let mut spi =
+            cx.device
+                .SPI2
+                .spi((sck, NoMiso, mosi), spi::MODE_0, 1_000_000.hz(), &mut rcc);
 
         let dc = gpiob.pb8.into_push_pull_output();
         let mut res = gpiob.pb9.into_push_pull_output();
 
         let mut delay = Delay::new(cx.core.SYST, rcc.clocks);
 
-        let mut disp: GraphicsMode<_>  = Builder::new().connect_spi(spi, dc).into();
+        let mut disp: GraphicsMode<_> = Builder::new().connect_spi(spi, dc).into();
 
-            
         disp.reset(&mut res, &mut delay).unwrap();
         disp.init().unwrap();
-    
+
         disp.clear();
 
+        let style1 = PrimitiveStyleBuilder::new()
+            .stroke_color(BinaryColor::On)
+            .stroke_width(2)
+            .fill_color(BinaryColor::On)
+            .build();
 
+        let style2 = PrimitiveStyleBuilder::new()
+            .stroke_color(BinaryColor::On)
+            .stroke_width(2)
+            .fill_color(BinaryColor::Off)
+            .build();
 
+        Circle::new(Point::new(27, 23), 5)
+            .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
+            .draw(&mut disp);
 
+        Rectangle::new(Point::new(10, 20), Point::new(25, 35))
+            .into_styled(style1)
+            .draw(&mut disp);
 
-        let t = Text::new("©", Point::new(20, 16))
-        .into_styled(TextStyle::new(Font6x8, BinaryColor::On));
-    
+        Rectangle::new(Point::new(10, 15), Point::new(25, 20))
+            .into_styled(style2)
+            .draw(&mut disp);
+
+        let t = Text::new("~ Breathalyzer!", Point::new(35, 16))
+            .into_styled(TextStyle::new(Font6x8, BinaryColor::On));
+
         t.draw(&mut disp);
-        
-        disp.flush().unwrap();
 
+        disp.flush().unwrap();
 
         // Return the initialised resources.
     }
 
     extern "C" {
-        fn USART4_USART5();    
+        fn USART4_USART5();
     }
 };
