@@ -4,20 +4,12 @@
 
 extern crate panic_semihosting;
 
-use stm32l0xx_hal as hal;
 use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
+use stm32l0xx_hal as hal;
 
 use stm32l0xx_hal::{
-    adc,
-    exti::TriggerEdge,
-    gpio::*,
-    pac,
-    prelude::*,
-    rcc::Config,
-    spi,
-    syscfg,
-    stm32
+    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, stm32, syscfg,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
@@ -31,7 +23,7 @@ const APP: () = {
         #[init([0; 512])]
         BUFFER: [u8; 512],
         #[init(false)]
-        STATE: bool
+        STATE: bool,
     }
 
     #[init]
@@ -64,7 +56,7 @@ const APP: () = {
             &mut syscfg,
             button.port(),
             button.pin_number(),
-            TriggerEdge::Falling,  
+            TriggerEdge::Falling,
         );
 
         let sck = gpiob.pb3;
@@ -82,11 +74,11 @@ const APP: () = {
             BUZZER: buzzer,
         }
     }
- 
+
     #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, INT], spawn = [button_event])]
     fn exti4_15(cx: exti4_15::Context) {
         cx.resources.INT.clear_irq(cx.resources.BUTTON.pin_number());
-        cx.spawn.button_event().unwrap();        
+        cx.spawn.button_event().unwrap();
     }
 
     #[task(priority = 1, resources = [BUZZER])]
@@ -101,7 +93,7 @@ const APP: () = {
         }
     }
 
-/*     #[]
+    /*     #[]
     fn buzzer_on(cx: buzzer_on::Context) {
 
     }

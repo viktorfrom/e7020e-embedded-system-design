@@ -19,6 +19,19 @@ use hal::{
     timer::Timer,
 };
 
+use embedded_graphics::{
+    fonts::{Font6x8, Text},
+    image::Image,
+    pixelcolor::raw::{BigEndian, LittleEndian},
+    pixelcolor::BinaryColor,
+    pixelcolor::Rgb565,
+    prelude::*,
+    primitives::Circle,
+    style::{PrimitiveStyle, TextStyle},
+};
+
+use tinybmp::Bmp;
+
 #[app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {}
@@ -52,14 +65,18 @@ const APP: () = {
 
         let mut delay = Delay::new(cx.core.SYST, rcc.clocks);
 
-        let mut disp: TerminalMode<_> = Builder::new().connect_spi(spi, dc).into();
+        let mut disp: GraphicsMode<_> = Builder::new().connect_spi(spi, dc).into();
 
         disp.reset(&mut res, &mut delay).unwrap();
         disp.init().unwrap();
 
         disp.clear();
 
-        disp.print_char('T');
+        let bmp = Bmp::from_slice(include_bytes!("dvd.bmp")).unwrap();
+
+        let image: Image<BinaryColor> = Image::new(bmp.image_data(), 55, 24);
+
+        image.draw(&mut disp);
 
         disp.flush().unwrap();
 
