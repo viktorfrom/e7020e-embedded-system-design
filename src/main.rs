@@ -3,9 +3,11 @@
 #![no_std]
 
 mod breathalyzer;
+mod buzzer;
 
 extern crate panic_semihosting;
 
+use crate::buzzer::Buzzer;
 use crate::breathalyzer::Breathalyzer;
 use stm32l0xx_hal as hal;
 use cortex_m::peripheral::DWT;
@@ -28,13 +30,10 @@ const APP: () = {
     struct Resources {
         EXT: pac::EXTI,
         BUTTON: gpioa::PA4<Input<PullUp>>,
-        BUZZER: gpioa::PA3<Output<PushPull>>,
-        TIMER: timer::Timer<pac::TIM2>,
+        TIMER_BREATH: timer::Timer<pac::TIM2>,
+        TIMER_BUZZER: timer::Timer<pac::TIM3>,
         BREATHALYZER: Breathalyzer,
-        #[init(false)]
-        BUZZER_ON: bool,
-        #[init(false)]
-        STATE: bool
+        BUZZER: Buzzer
     }
 
     #[init]
@@ -57,7 +56,9 @@ const APP: () = {
 
        // Configure timer
        let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
+       let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
        tim2.listen();
+       tim3.listen();
 
         // External interrupt
         let exti = cx.device.EXTI;
@@ -76,9 +77,7 @@ const APP: () = {
         // let mosi = gpioa.pa7;
         // let nss = gpioa.pa15.into_push_pull_output();
 
-        // Configure outputs
-        let mut buzzer = gpioa.pa3.into_push_pull_output();
-
+        let mut buzzer = Buzzer::new(gpioa.pa3);
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
         breathalyzer.on();
     
@@ -86,21 +85,27 @@ const APP: () = {
         init::LateResources {
             EXT: exti,
             BUTTON: button,
-            BUZZER: buzzer,
-            TIMER: tim2,
-            BREATHALYZER: breathalyzer
+            TIMER_BREATH: tim2,
+            TIMER_BUZZER: tim3,
+            BREATHALYZER: breathalyzer,
+            BUZZER: buzzer
         }
     }
 
     #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT, BREATHALYZER])]
     fn exti4_15(cx: exti4_15::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
-        cx.resources.BREATHALYZER.state = !cx.resources.BREATHALYZER.state;
+        if cx.resources.BREATHALYZER.state {
+            cx.resources.BREATHALYZER.off();
+        } else {
+            cx.resources.BREATHALYZER.on();
+        }
     }
 
-    #[task(binds = TIM2, priority = 2, resources = [BREATHALYZER])]
+    #[task(binds = TIM2, priority = 2, resources = [BREATHALYZER, TIMER_BREATH])]
     fn sensor(cx: sensor::Context) {
         if cx.resources.BREATHALYZER.state {
+            cx.resources.TIMER_BREATH.clear_irq();
             let value: u16 = cx.resources.BREATHALYZER.read();
             hprintln!("Value: {:#}", value).unwrap();            
         }
