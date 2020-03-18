@@ -22,18 +22,12 @@ postcard                = "0.4.2"
 version = "=0.3.0-alpha.4"
 features = [ "graphics" ]
 
-#[dependencies.embedded-graphics]
-#version = "=0.5.1"
-
-
 [dependencies.embedded-graphics]
 version = "=0.6.0-alpha.3"
 
-
-
-
-
-
+# Used to load BMP images in various examples
+[dev-dependencies.tinybmp]
+version = "0.2.1"
 
 [dependencies.cortex-m]
 version         = "0.6.2"
