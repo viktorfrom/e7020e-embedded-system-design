@@ -14,6 +14,7 @@ use stm32l0xx_hal::{
     gpio::*,
     pac,
     prelude::*,
+    rcc,
     rcc::Config,
     spi,
     syscfg,
@@ -31,7 +32,11 @@ const APP: () = {
         BUZZER_ON: bool,
         #[init(false)]
         STATE: bool,
-        TIMER: timer::Timer<pac::TIM2>
+        #[init(false)]
+        PWM_ON: bool,
+        TIMER_PWM: timer::Timer<pac::TIM2>,
+        TIMER_INTERVAL: timer::Timer<pac::TIM3>,
+        RCC: rcc::Rcc
     }
 
     #[init]
@@ -42,7 +47,9 @@ const APP: () = {
 
         // Timeout is the frequency I think?
         let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.hz(), &mut rcc);
+        let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 100.ms(), &mut rcc);
         tim2.listen();
+        tim3.listen();
 
         // Acquire the GPIOB peripheral. This also enables the clock for GPIOB in
         // the RCC register.
@@ -81,7 +88,9 @@ const APP: () = {
             EXT: exti,
             BUTTON: button,
             BUZZER: buzzer,
-            TIMER: tim2
+            TIMER_PWM: tim2,
+            TIMER_INTERVAL: tim3,
+            RCC: rcc
         }
     }
  
@@ -91,11 +100,11 @@ const APP: () = {
         cx.spawn.button_event().unwrap();        
     }
 
-    #[task(binds = TIM2, priority = 1, resources = [BUZZER, STATE, TIMER, BUZZER_ON])]
+    #[task(binds = TIM2, priority = 1, resources = [BUZZER, STATE, TIMER_PWM, BUZZER_ON, PWM_ON])]
     fn tim2(cx: tim2::Context) {
-        cx.resources.TIMER.clear_irq();
+        cx.resources.TIMER_PWM.clear_irq();
         
-        if *cx.resources.STATE {
+        if *cx.resources.STATE && *cx.resources.PWM_ON {
             if *cx.resources.BUZZER_ON {
                 *cx.resources.BUZZER_ON = false;
                 cx.resources.BUZZER.set_high().unwrap();
@@ -106,6 +115,12 @@ const APP: () = {
         }
     }
 
+    #[task(binds = TIM3, priority = 1, resources = [TIMER_PWM, TIMER_INTERVAL, STATE, PWM_ON])]
+    fn tim3(cx: tim3::Context) {
+        cx.resources.TIMER_INTERVAL.clear_irq();
+        *cx.resources.PWM_ON = !*cx.resources.PWM_ON;
+    }
+
     #[task(priority = 1, resources = [BUZZER, STATE])]
     fn button_event(cx: button_event::Context) {
         if *cx.resources.STATE {
@@ -113,16 +128,6 @@ const APP: () = {
         } else {
             *cx.resources.STATE = true;
         }
-    }
-
-    #[task(resources = [BUZZER, BUZZER_ON])]
-    fn buzzer_on(cx: buzzer_on::Context) {
-        
-    }
-
-    #[task(resources = [BUZZER, BUZZER_ON])]
-    fn buzzer_off(cx: buzzer_off::Context) {
-
     }
 
     // Interrupt handlers used to dispatch software tasks
