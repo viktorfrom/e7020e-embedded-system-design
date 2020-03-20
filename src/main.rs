@@ -31,7 +31,8 @@ const APP: () = {
         EXT: pac::EXTI,
         BUTTON: gpioa::PA4<Input<PullUp>>,
         TIMER_BREATH: timer::Timer<pac::TIM2>,
-        TIMER_BUZZER: timer::Timer<pac::TIM3>,
+        TIMER_PWM: timer::Timer<pac::TIM3>,
+        TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
         BUZZER: Buzzer
     }
@@ -54,16 +55,15 @@ const APP: () = {
         // Configure inputs
         let button = gpioa.pa4.into_pull_up_input();
 
-       // Configure timer
-       let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
-       let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
-       tim2.listen();
-       tim3.listen();
+        // Configure timers
+        let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
+        let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
+        let mut tim6 = timer::Timer::tim21(cx.device.TIM21, 1000.ms(), &mut rcc);
 
         // External interrupt
         let exti = cx.device.EXTI;
 
-        // Configure external interrupt for button
+        // Configure interrupts
         exti.listen(
             &mut syscfg,
             button.port(),
@@ -71,14 +71,20 @@ const APP: () = {
             TriggerEdge::Falling,  
         );
 
-        // SPI for OLED
+        tim2.listen();
+        tim3.listen();
+
+        // Initialize OLED
         // let sck = gpiob.pb3;
         // let miso = gpioa.pa6;
         // let mosi = gpioa.pa7;
         // let nss = gpioa.pa15.into_push_pull_output();
 
+        // Initialize modules
         let mut buzzer = Buzzer::new(gpioa.pa3);
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
+
+        // Start heating breathalyzer
         breathalyzer.on();
     
         // Return the initialised resources.
@@ -86,15 +92,19 @@ const APP: () = {
             EXT: exti,
             BUTTON: button,
             TIMER_BREATH: tim2,
-            TIMER_BUZZER: tim3,
+            TIMER_PWM: tim3,
+            TIMER_PWM_INTERVAL: tim6,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer
         }
     }
 
-    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT, BREATHALYZER])]
-    fn exti4_15(cx: exti4_15::Context) {
+    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT, BUZZER, BREATHALYZER])]
+    fn button_event(cx: button_event::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
+
+        cx.resources.BUZZER.enabled = !cx.resources.BUZZER.enabled; 
+
         if cx.resources.BREATHALYZER.state {
             cx.resources.BREATHALYZER.off();
         } else {
@@ -103,11 +113,22 @@ const APP: () = {
     }
 
     #[task(binds = TIM2, priority = 2, resources = [BREATHALYZER, TIMER_BREATH])]
-    fn sensor(cx: sensor::Context) {
+    fn sensor_poll(cx: sensor_poll::Context) {
+        cx.resources.TIMER_BREATH.clear_irq();
+
         if cx.resources.BREATHALYZER.state {
-            cx.resources.TIMER_BREATH.clear_irq();
             let value: u16 = cx.resources.BREATHALYZER.read();
             hprintln!("Value: {:#}", value).unwrap();            
+        }
+    }
+
+    #[task(binds = TIM3, priority = 2, resources = [BUZZER, TIMER_PWM])]
+    fn buzzer_pwm(cx: buzzer_pwm::Context) {
+        cx.resources.TIMER_PWM.clear_irq();
+
+        if cx.resources.BUZZER.enabled {
+            //hprintln!("hi").unwrap();
+            cx.resources.BUZZER.toggle();
         }
     }
 

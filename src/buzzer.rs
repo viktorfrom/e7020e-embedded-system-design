@@ -5,7 +5,8 @@ use stm32l0xx_hal::{
 
 pub struct Buzzer {
     pub pin: PA3<Output<PushPull>>,
-    pub state: bool
+    pub state: bool,
+    pub enabled: bool
 }
 
 impl Buzzer {
@@ -14,17 +15,32 @@ impl Buzzer {
     ) -> Buzzer {
         Buzzer {
             pin: pin.into_push_pull_output(),
-            state: false
+            state: false,
+            enabled: false
         }
     }
 
     pub fn on(&mut self) {
-        self.state = true;
-        self.pin.set_high().unwrap();
+        if self.enabled {
+            self.state = true;
+            self.pin.set_high().unwrap();
+        }
     }
 
     pub fn off(&mut self) {
-        self.state = false;
-        self.pin.set_low().unwrap();
+        if self.enabled {
+            self.state = false;
+            self.pin.set_low().unwrap();
+        }
+    }
+
+    pub fn toggle(&mut self) {
+        if self.enabled {
+            if self.state {
+                self.off();
+            } else {
+                self.on();
+            }
+        }
     }
 }
