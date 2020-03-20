@@ -4,8 +4,9 @@
 extern crate panic_semihosting;
 
 use rtfm::app;
-use ssd1306::{mode::TerminalMode, prelude::*, Builder};
+use ssd1306::{prelude::*, Builder};
 use stm32l0xx_hal as hal;
+use embedded_graphics as graphics;
 
 use hal::{
     delay::Delay,
@@ -19,15 +20,13 @@ use hal::{
     timer::Timer,
 };
 
-use embedded_graphics::{
-    fonts::{Font6x8, Text},
+use graphics::{
+    fonts::{Font12x16, Font6x12, Text},
     pixelcolor::BinaryColor,
     prelude::*,
-    primitives::Circle,
-    style::{PrimitiveStyle, TextStyle},
+    primitives::{Circle, Rectangle},
+    style::{PrimitiveStyle, PrimitiveStyleBuilder, TextStyle},
 };
-
-use embedded_graphics::{primitives::Rectangle, style::PrimitiveStyleBuilder};
 
 #[app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
@@ -82,7 +81,7 @@ const APP: () = {
             .build();
 
         Circle::new(Point::new(27, 23), 5)
-            .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
+            .into_styled(style2)
             .draw(&mut disp);
 
         Rectangle::new(Point::new(10, 20), Point::new(25, 35))
@@ -93,10 +92,14 @@ const APP: () = {
             .into_styled(style2)
             .draw(&mut disp);
 
-        let t = Text::new("~ Breathalyzer!", Point::new(35, 16))
-            .into_styled(TextStyle::new(Font6x8, BinaryColor::On));
+        let t1 = Text::new("~ Breathalyzer", Point::new(35, 16))
+            .into_styled(TextStyle::new(Font6x12, BinaryColor::On));
 
-        t.draw(&mut disp);
+        let t2 = Text::new(" 0.0002", Point::new(35, 35))
+            .into_styled(TextStyle::new(Font12x16, BinaryColor::On));
+
+        t1.draw(&mut disp);
+        t2.draw(&mut disp);
 
         disp.flush().unwrap();
 
