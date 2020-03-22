@@ -1,33 +1,32 @@
 use stm32l0xx_hal::{
     adc::Adc,
-    gpio::{*, gpioa::{PA2, PA5}},
+    gpio::{
+        gpioa::{PA2, PA5},
+        *,
+    },
     prelude::*,
 };
 
 pub enum BAC {
     LOW,
     MEDIUM,
-    HIGH
+    HIGH,
 }
 
 pub struct Breathalyzer {
     pub heater: PA5<Output<PushPull>>,
     pub dat: PA2<Analog>,
     pub adc: Adc,
-    pub state: bool
+    pub state: bool,
 }
 
 impl Breathalyzer {
-    pub fn new(
-        heater: PA5<Input<Floating>>,
-        dat: PA2<Input<Floating>>,
-        adc: Adc,
-    ) -> Breathalyzer {
+    pub fn new(heater: PA5<Input<Floating>>, dat: PA2<Input<Floating>>, adc: Adc) -> Breathalyzer {
         Breathalyzer {
             heater: heater.into_push_pull_output(),
             dat: dat.into_analog(),
             adc: adc,
-            state: false
+            state: false,
         }
     }
 
@@ -43,7 +42,7 @@ impl Breathalyzer {
         self.heater.set_high().unwrap();
     }
 
-    /// Reads the value from ADC 
+    /// Reads the value from ADC
     pub fn read(&mut self) -> u16 {
         let value: u16 = self.adc.read(&mut self.dat).unwrap();
         value

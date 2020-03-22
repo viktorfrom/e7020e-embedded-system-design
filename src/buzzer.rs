@@ -1,22 +1,20 @@
 use stm32l0xx_hal::{
-    gpio::{*, gpioa::PA3},
+    gpio::{gpioa::PA3, *},
     prelude::*,
 };
 
 pub struct Buzzer {
     pub pin: PA3<Output<PushPull>>,
     pub on: bool,
-    pub enabled: bool
+    pub enabled: bool,
 }
 
 impl Buzzer {
-    pub fn new(
-        pin: PA3<Input<Floating>>
-    ) -> Buzzer {
+    pub fn new(pin: PA3<Input<Floating>>) -> Buzzer {
         Buzzer {
             pin: pin.into_push_pull_output(),
             on: false,
-            enabled: false
+            enabled: false,
         }
     }
 

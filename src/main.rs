@@ -7,23 +7,15 @@ mod buzzer;
 
 extern crate panic_semihosting;
 
-use crate::buzzer::Buzzer;
 use crate::breathalyzer::Breathalyzer;
-use stm32l0xx_hal as hal;
+use crate::buzzer::Buzzer;
 use cortex_m::peripheral::DWT;
+use stm32l0xx_hal as hal;
 // hprintln is very resource demanding, only use for testing non-time critical things!
-//use cortex_m_semihosting::hprintln; 
+//use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
-    adc,
-    exti::TriggerEdge,
-    gpio::*,
-    pac,
-    prelude::*,
-    rcc::Config,
-    spi,
-    syscfg,
-    timer
+    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, syscfg, timer,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
@@ -35,7 +27,7 @@ const APP: () = {
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
-        BUZZER: Buzzer
+        BUZZER: Buzzer,
     }
 
     #[init]
@@ -69,7 +61,7 @@ const APP: () = {
             &mut syscfg,
             button.port(),
             button.pin_number(),
-            TriggerEdge::Falling,  
+            TriggerEdge::Falling,
         );
 
         tim2.listen();
@@ -93,7 +85,7 @@ const APP: () = {
             TIMER_PWM: tim3,
             TIMER_PWM_INTERVAL: tim21,
             BREATHALYZER: breathalyzer,
-            BUZZER: buzzer
+            BUZZER: buzzer,
         }
     }
 
@@ -124,7 +116,7 @@ const APP: () = {
 
         if cx.resources.BREATHALYZER.state {
             let value: u16 = cx.resources.BREATHALYZER.read();
-            //hprintln!("Value: {:#}", value).unwrap();            
+            //hprintln!("Value: {:#}", value).unwrap();
         }
     }
 

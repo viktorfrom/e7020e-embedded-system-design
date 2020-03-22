@@ -4,22 +4,12 @@
 
 extern crate panic_semihosting;
 
-use stm32l0xx_hal as hal;
-use cortex_m::peripheral::{DWT, syst, Peripherals};
+use cortex_m::peripheral::{syst, Peripherals, DWT};
 use cortex_m_semihosting::hprintln;
+use stm32l0xx_hal as hal;
 
 use stm32l0xx_hal::{
-    adc,
-    exti::TriggerEdge,
-    gpio::*,
-    pac,
-    prelude::*,
-    rcc,
-    rcc::Config,
-    spi,
-    syscfg,
-    stm32,
-    timer
+    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc, rcc::Config, spi, stm32, syscfg, timer,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
@@ -36,7 +26,7 @@ const APP: () = {
         PWM_ON: bool,
         TIMER_PWM: timer::Timer<pac::TIM2>,
         TIMER_INTERVAL: timer::Timer<pac::TIM3>,
-        RCC: rcc::Rcc
+        RCC: rcc::Rcc,
     }
 
     #[init]
@@ -72,7 +62,7 @@ const APP: () = {
             &mut syscfg,
             button.port(),
             button.pin_number(),
-            TriggerEdge::Falling,  
+            TriggerEdge::Falling,
         );
 
         let sck = gpiob.pb3;
@@ -90,20 +80,20 @@ const APP: () = {
             BUZZER: buzzer,
             TIMER_PWM: tim2,
             TIMER_INTERVAL: tim3,
-            RCC: rcc
+            RCC: rcc,
         }
     }
- 
+
     #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT], spawn = [button_event])]
     fn exti4_15(cx: exti4_15::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
-        cx.spawn.button_event().unwrap();        
+        cx.spawn.button_event().unwrap();
     }
 
     #[task(binds = TIM2, priority = 1, resources = [BUZZER, STATE, TIMER_PWM, BUZZER_ON, PWM_ON])]
     fn tim2(cx: tim2::Context) {
         cx.resources.TIMER_PWM.clear_irq();
-        
+
         if *cx.resources.STATE && *cx.resources.PWM_ON {
             if *cx.resources.BUZZER_ON {
                 *cx.resources.BUZZER_ON = false;
