@@ -1,5 +1,5 @@
 [package]
-name = "e7030e-embedded-system-design"
+name = "e7020e-embedded-system-design"
 categories = ["embedded", "no-std"]
 version = "0.1.0"
 authors = ["Viktor From <viktor.from91@gmail.com>"]
@@ -25,6 +25,10 @@ features = [ "graphics" ]
 [dependencies.embedded-graphics]
 version = "=0.6.0-alpha.3"
 
+# Used to load BMP images in various examples
+[dev-dependencies.tinybmp]
+version = "0.2.1"
+
 [dependencies.cortex-m]
 version         = "0.6.2"
 # features        = ["inline-asm"] # <- currently requires nightly compiler
@@ -45,7 +49,7 @@ default-features = false
 
 # this lets you use `cargo fix`!
 [[bin]]
-name            = "e7030e-embedded-system-design"
+name            = "e7020e-embedded-system-design"
 test            = false
 bench           = false
 

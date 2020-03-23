@@ -129,7 +129,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "338089f42c427b86394a5ee60ff321da23a5c89c9d89514c829687b26359fcff"
 
 [[package]]
-name = "e7030e-embedded-system-design"
+name = "e7020e-embedded-system-design"
 version = "0.1.0"
 dependencies = [
  "aligned",
@@ -147,6 +147,7 @@ dependencies = [
  "postcard",
  "ssd1306",
  "stm32l0xx-hal",
+ "tinybmp",
  "ufmt",
 ]
 
@@ -224,6 +225,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1411551beb3c11dedfb0a90a0fa256b47d28b9ec2cdff34c25a2fa59e45dbdc"
 
 [[package]]
+<<<<<<< HEAD
+=======
+name = "nom"
+version = "5.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b471253da97532da4b61552249c521e01e736071f71c1a4f7ebbfbf0a06aad6"
+dependencies = [
+ "memchr",
+ "version_check",
+]
+
+[[package]]
+>>>>>>> master
 name = "panic-semihosting"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -404,6 +418,18 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
+=======
+name = "tinybmp"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9415a89f08c16db3f0a41ba43bc6304a26dffa6f30b79c78a27686ad74360b55"
+dependencies = [
+ "nom",
+]
+
+[[package]]
+>>>>>>> master
 name = "typenum"
 version = "1.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -451,6 +477,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876e32dcadfe563a4289e994f7cb391197f362b6315dc45e8ba4aa6f564a4b3c"
 
 [[package]]
+<<<<<<< HEAD
+=======
+name = "version_check"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "078775d0255232fb988e6fccf26ddc9d1ac274299aaedcedce21c6f72cc533ce"
+
+[[package]]
+>>>>>>> master
 name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -4,8 +4,9 @@
 extern crate panic_semihosting;
 
 use rtfm::app;
-use ssd1306::{mode::TerminalMode, prelude::*, Builder};
+use ssd1306::{prelude::*, Builder};
 use stm32l0xx_hal as hal;
+use embedded_graphics as graphics;
 
 use hal::{
     delay::Delay,
@@ -17,6 +18,14 @@ use hal::{
     spi::{self, Mode, NoMiso, Phase, Polarity},
     syscfg,
     timer::Timer,
+};
+
+use graphics::{
+    fonts::{Font12x16, Font6x12, Text},
+    pixelcolor::BinaryColor,
+    prelude::*,
+    primitives::{Circle, Rectangle},
+    style::{PrimitiveStyle, PrimitiveStyleBuilder, TextStyle},
 };
 
 #[app(device = stm32l0xx_hal::pac, peripherals = true)]
@@ -52,14 +61,45 @@ const APP: () = {
 
         let mut delay = Delay::new(cx.core.SYST, rcc.clocks);
 
-        let mut disp: TerminalMode<_> = Builder::new().connect_spi(spi, dc).into();
+        let mut disp: GraphicsMode<_> = Builder::new().connect_spi(spi, dc).into();
 
         disp.reset(&mut res, &mut delay).unwrap();
         disp.init().unwrap();
 
         disp.clear();
 
-        disp.print_char('T');
+        let style1 = PrimitiveStyleBuilder::new()
+            .stroke_color(BinaryColor::On)
+            .stroke_width(2)
+            .fill_color(BinaryColor::On)
+            .build();
+
+        let style2 = PrimitiveStyleBuilder::new()
+            .stroke_color(BinaryColor::On)
+            .stroke_width(2)
+            .fill_color(BinaryColor::Off)
+            .build();
+
+        Circle::new(Point::new(27, 23), 5)
+            .into_styled(style2)
+            .draw(&mut disp);
+
+        Rectangle::new(Point::new(10, 20), Point::new(25, 35))
+            .into_styled(style1)
+            .draw(&mut disp);
+
+        Rectangle::new(Point::new(10, 15), Point::new(25, 20))
+            .into_styled(style2)
+            .draw(&mut disp);
+
+        let t1 = Text::new("~ Breathalyzer", Point::new(35, 16))
+            .into_styled(TextStyle::new(Font6x12, BinaryColor::On));
+
+        let t2 = Text::new(" 0.0002", Point::new(35, 35))
+            .into_styled(TextStyle::new(Font12x16, BinaryColor::On));
+
+        t1.draw(&mut disp);
+        t2.draw(&mut disp);
 
         disp.flush().unwrap();
 
