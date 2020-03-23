@@ -3,21 +3,12 @@
 
 extern crate panic_semihosting;
 
-use stm32l0xx_hal as hal;
-use cortex_m::peripheral::{DWT, syst, Peripherals};
+use cortex_m::peripheral::{syst, Peripherals, DWT};
 use cortex_m_semihosting::hprintln;
+use stm32l0xx_hal as hal;
 
 use stm32l0xx_hal::{
-    adc,
-    exti::TriggerEdge,
-    gpio::*,
-    pac,
-    prelude::*,
-    rcc::Config,
-    spi,
-    syscfg,
-    stm32,
-    timer
+    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, stm32, syscfg, timer,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
@@ -30,7 +21,7 @@ const APP: () = {
         ADC: adc::Adc,
         TIMER: timer::Timer<pac::TIM2>,
         #[init(false)]
-        BREATHALYZER_ON: bool
+        BREATHALYZER_ON: bool,
     }
 
     #[init]
@@ -67,7 +58,7 @@ const APP: () = {
             &mut syscfg,
             button.port(),
             button.pin_number(),
-            TriggerEdge::Falling,  
+            TriggerEdge::Falling,
         );
 
         // Start heating the alchohol sensor (needs warmup)
@@ -79,7 +70,7 @@ const APP: () = {
             HEATER: heater,
             DAT: dat,
             ADC: adc,
-            TIMER: tim2
+            TIMER: tim2,
         }
     }
 
@@ -93,7 +84,7 @@ const APP: () = {
     fn breathalyzer(cx: breathalyzer::Context) {
         if *cx.resources.BREATHALYZER_ON {
             let value: u16 = cx.resources.ADC.read(cx.resources.DAT).unwrap();
-            hprintln!("Value: {:#}", value).unwrap();            
+            hprintln!("Value: {:#}", value).unwrap();
         }
     }
 

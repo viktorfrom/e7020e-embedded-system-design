@@ -7,23 +7,15 @@ mod buzzer;
 
 extern crate panic_semihosting;
 
-use crate::buzzer::Buzzer;
 use crate::breathalyzer::Breathalyzer;
-use stm32l0xx_hal as hal;
+use crate::buzzer::Buzzer;
 use cortex_m::peripheral::DWT;
+use stm32l0xx_hal as hal;
 // hprintln is very resource demanding, only use for testing non-time critical things!
-//use cortex_m_semihosting::hprintln; 
+//use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
-    adc,
-    exti::TriggerEdge,
-    gpio::*,
-    pac,
-    prelude::*,
-    rcc::Config,
-    spi,
-    syscfg,
-    timer
+    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, syscfg, timer,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
@@ -35,7 +27,7 @@ const APP: () = {
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
-        BUZZER: Buzzer
+        BUZZER: Buzzer,
     }
 
     #[init]
@@ -69,7 +61,7 @@ const APP: () = {
             &mut syscfg,
             button.port(),
             button.pin_number(),
-            TriggerEdge::Falling,  
+            TriggerEdge::Falling,
         );
 
         tim2.listen();
@@ -93,12 +85,12 @@ const APP: () = {
             TIMER_PWM: tim3,
             TIMER_PWM_INTERVAL: tim21,
             BREATHALYZER: breathalyzer,
-            BUZZER: buzzer
+            BUZZER: buzzer,
         }
     }
 
     // Handles the button press
-    #[task(binds = EXTI4_15, priority = 1, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
 
@@ -107,6 +99,7 @@ const APP: () = {
             cx.resources.TIMER_PWM_INTERVAL.unlisten();
         } else {
             cx.resources.BUZZER.enable();
+            cx.resources.TIMER_PWM_INTERVAL.reset();
             cx.resources.TIMER_PWM_INTERVAL.listen();
         }
 
@@ -118,18 +111,18 @@ const APP: () = {
     }
 
     // Polls the alcohol sensor
-    #[task(binds = TIM2, priority = 1, resources = [BREATHALYZER, TIMER_BREATH])]
+    #[task(binds = TIM2, priority = 5, resources = [BREATHALYZER, TIMER_BREATH])]
     fn sensor_poll(cx: sensor_poll::Context) {
         cx.resources.TIMER_BREATH.clear_irq();
 
         if cx.resources.BREATHALYZER.state {
             let value: u16 = cx.resources.BREATHALYZER.read();
-            //hprintln!("Value: {:#}", value).unwrap();            
+            //hprintln!("Value: {:#}", value).unwrap();
         }
     }
 
     // Toggles the buzzer's PWM according to the set frequency
-    #[task(binds = TIM3, priority = 1, resources = [BUZZER, TIMER_PWM])]
+    #[task(binds = TIM3, priority = 5, resources = [BUZZER, TIMER_PWM])]
     fn buzzer_pwm(cx: buzzer_pwm::Context) {
         cx.resources.TIMER_PWM.clear_irq();
 
@@ -140,7 +133,7 @@ const APP: () = {
     }
 
     // Toggles buzzer beep intervals
-    #[task(binds = TIM21, priority = 1, resources = [BUZZER, TIMER_PWM_INTERVAL])]
+    #[task(binds = TIM21, priority = 5, resources = [BUZZER, TIMER_PWM_INTERVAL])]
     fn buzzer_interval(cx: buzzer_interval::Context) {
         cx.resources.TIMER_PWM_INTERVAL.clear_irq();
 

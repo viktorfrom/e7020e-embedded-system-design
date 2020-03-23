@@ -14,15 +14,14 @@ use hal::{
     pac,
     prelude::*,
     rcc::Config,
-    spi::{self, Mode, Phase, Polarity, NoMiso},
+    spi::{self, Mode, NoMiso, Phase, Polarity},
     syscfg,
-    timer::{Timer},
+    timer::Timer,
 };
 
 #[app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
-    struct Resources {
-    }
+    struct Resources {}
 
     #[init]
     fn init(cx: init::Context) {
@@ -43,14 +42,10 @@ const APP: () = {
         let mosi = gpiob.pb15;
 
         // Initialise the SPI peripheral.
-        let mut spi = cx.device
-           .SPI2
-           .spi(
-                (sck, NoMiso, mosi), 
-                spi::MODE_0, 
-                1_000_000.hz(), 
-                &mut rcc
-            );
+        let mut spi =
+            cx.device
+                .SPI2
+                .spi((sck, NoMiso, mosi), spi::MODE_0, 1_000_000.hz(), &mut rcc);
 
         let dc = gpiob.pb8.into_push_pull_output();
         let mut res = gpiob.pb9.into_push_pull_output();
@@ -61,37 +56,37 @@ const APP: () = {
 
         disp.reset(&mut res, &mut delay).unwrap();
         disp.init().unwrap();
-    
+
         // Top side
         disp.set_pixel(0, 0, 1);
         disp.set_pixel(1, 0, 1);
         disp.set_pixel(2, 0, 1);
         disp.set_pixel(3, 0, 1);
-    
+
         // Right side
         disp.set_pixel(3, 0, 1);
         disp.set_pixel(3, 1, 1);
         disp.set_pixel(3, 2, 1);
         disp.set_pixel(3, 3, 1);
-    
+
         // Bottom side
         disp.set_pixel(0, 3, 1);
         disp.set_pixel(1, 3, 1);
         disp.set_pixel(2, 3, 1);
         disp.set_pixel(3, 3, 1);
-    
+
         // Left side
         disp.set_pixel(0, 0, 1);
         disp.set_pixel(0, 1, 1);
         disp.set_pixel(0, 2, 1);
         disp.set_pixel(0, 3, 1);
-    
+
         disp.flush().unwrap();
 
         // Return the initialised resources.
     }
 
     extern "C" {
-        fn USART4_USART5();    
+        fn USART4_USART5();
     }
 };
