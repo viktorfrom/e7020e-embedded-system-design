@@ -18,9 +18,12 @@ postcard                = "0.4.2"
 #longfi-device           = { git = "https://git.grepit.se/grepit/lora-rs.git" }
 #communicator            = { git = "https://git.grepit.se/grepit/communicator.git" }
 
-#oled_crates
-embedded-graphics = "0.5.2"
-ssd1306 = "0.2.6"
+[dependencies.ssd1306]
+version = "=0.3.0-alpha.4"
+features = [ "graphics" ]
+
+[dependencies.embedded-graphics]
+version = "=0.6.0-alpha.3"
 
 [dependencies.cortex-m]
 version         = "0.6.2"

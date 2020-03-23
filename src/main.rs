@@ -4,11 +4,13 @@
 
 mod breathalyzer;
 mod buzzer;
+//mod oled;
 
 extern crate panic_semihosting;
 
 use crate::breathalyzer::Breathalyzer;
 use crate::buzzer::Buzzer;
+//use crate::oled::Oled;
 use cortex_m::peripheral::DWT;
 use stm32l0xx_hal as hal;
 // hprintln is very resource demanding, only use for testing non-time critical things!
@@ -16,6 +18,14 @@ use stm32l0xx_hal as hal;
 
 use stm32l0xx_hal::{
     adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, syscfg, timer,
+    adc,
+    exti::TriggerEdge,
+    gpio::*,
+    pac,
+    prelude::*,
+    rcc::Config,
+    spi::{self, Mode, NoMiso, Phase, Polarity},
+    syscfg, timer,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
@@ -28,6 +38,7 @@ const APP: () = {
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
         BUZZER: Buzzer,
+        //OLED: Oled,
     }
 
     #[init]
@@ -68,14 +79,24 @@ const APP: () = {
         tim3.listen();
 
         // Initialize OLED
-        // let sck = gpiob.pb3;
-        // let miso = gpioa.pa6;
-        // let mosi = gpioa.pa7;
+        let mut cs = gpiob.pb12.into_push_pull_output();
+        cs.set_low(); // not sure if needed, did not try without it
+
+        let sck = gpiob.pb13;
+        let mosi = gpiob.pb15;
+
+        // Initialise the SPI peripheral.
+        let mut spi =
+            cx.device
+                .SPI2
+                .spi((sck, NoMiso, mosi), spi::MODE_0, 1_000_000.hz(), &mut rcc);
+
         // let nss = gpioa.pa15.into_push_pull_output();
 
         // Initialize modules
         let mut buzzer = Buzzer::new(gpioa.pa3);
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
+        //let mut oled = Oled::new(spi);
 
         // Return the initialised resources.
         init::LateResources {
@@ -86,6 +107,7 @@ const APP: () = {
             TIMER_PWM_INTERVAL: tim21,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer,
+            //OLED: oled,
         }
     }
 
