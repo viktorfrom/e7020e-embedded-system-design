@@ -129,7 +129,11 @@ const APP: () = {
             cx.resources.BREATHALYZER.on();
         }
 
-        cx.resources.OLED.on();
+        if cx.resources.OLED.state  { 
+            cx.resources.OLED.off();
+        } else { 
+            cx.resources.OLED.on();
+        } 
     }
 
     // Polls the alcohol sensor

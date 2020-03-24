@@ -40,7 +40,6 @@ impl Oled {
         delay: Delay,
     ) -> Oled {
         Oled {
-            //spi: spi,
             pb9: pb9.into_push_pull_output(),
             disp: Builder::new()
                 .connect_spi(spi, pb8.into_push_pull_output())
@@ -50,7 +49,6 @@ impl Oled {
         }
     }
 
-    /// Turns on the oled
     pub fn on(&mut self) {
         let res = &mut self.pb9;
 
@@ -95,5 +93,20 @@ impl Oled {
         self.disp.flush().unwrap();
 
         self.state = true;
+    }
+
+    pub fn off(&mut self) {
+        let res = &mut self.pb9;
+
+        self.disp.reset(res, &mut self.delay).unwrap();
+        self.disp.init().unwrap();
+
+        self.disp.clear();
+
+        // clear display
+
+        self.disp.flush().unwrap();
+
+        self.state = false;
     }
 }
