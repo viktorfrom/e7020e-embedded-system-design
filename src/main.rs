@@ -4,13 +4,13 @@
 
 mod breathalyzer;
 mod buzzer;
-//mod oled;
+mod oled;
 
 extern crate panic_semihosting;
 
 use crate::breathalyzer::Breathalyzer;
 use crate::buzzer::Buzzer;
-//use crate::oled::Oled;
+use crate::oled::Oled;
 use cortex_m::peripheral::DWT;
 use stm32l0xx_hal as hal;
 // hprintln is very resource demanding, only use for testing non-time critical things!
@@ -18,6 +18,7 @@ use stm32l0xx_hal as hal;
 
 use stm32l0xx_hal::{
     adc,
+    delay::Delay,
     exti::TriggerEdge,
     gpio::*,
     pac,
@@ -37,7 +38,7 @@ const APP: () = {
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
         BUZZER: Buzzer,
-        //OLED: Oled,
+        OLED: Oled,
     }
 
     #[init]
@@ -80,9 +81,9 @@ const APP: () = {
         // Initialize OLED
         let mut cs = gpiob.pb12.into_push_pull_output();
         cs.set_low(); // not sure if needed, did not try without it
-
         let sck = gpiob.pb13;
         let mosi = gpiob.pb15;
+        let mut delay = Delay::new(cx.core.SYST, rcc.clocks);
 
         // Initialise the SPI peripheral.
         let mut spi =
@@ -95,7 +96,7 @@ const APP: () = {
         // Initialize modules
         let mut buzzer = Buzzer::new(gpioa.pa3);
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
-        //let mut oled = Oled::new(spi);
+        let mut oled = Oled::new(spi, gpiob.pb8, gpiob.pb9, delay);
 
         // Return the initialised resources.
         init::LateResources {
@@ -106,7 +107,7 @@ const APP: () = {
             TIMER_PWM_INTERVAL: tim21,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer,
-            //OLED: oled,
+            OLED: oled,
         }
     }
 
