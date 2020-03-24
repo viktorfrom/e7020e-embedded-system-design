@@ -11,13 +11,10 @@ extern crate panic_semihosting;
 use crate::breathalyzer::Breathalyzer;
 use crate::buzzer::Buzzer;
 use crate::oled::Oled;
-use cortex_m::peripheral::DWT;
-use stm32l0xx_hal as hal;
 // hprintln is very resource demanding, only use for testing non-time critical things!
 //use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
-    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, syscfg, timer,
     adc,
     delay::Delay,
     exti::TriggerEdge,
@@ -25,7 +22,7 @@ use stm32l0xx_hal::{
     pac,
     prelude::*,
     rcc::Config,
-    spi::{self, Mode, NoMiso, Phase, Polarity},
+    spi::{self, Mode, NoMiso, Phase, Polarity, Spi},
     syscfg, timer,
 };
 
@@ -113,7 +110,7 @@ const APP: () = {
     }
 
     // Handles the button press
-    #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, OLED, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
 
@@ -131,6 +128,8 @@ const APP: () = {
         } else {
             cx.resources.BREATHALYZER.on();
         }
+
+        cx.resources.OLED.on();
     }
 
     // Polls the alcohol sensor

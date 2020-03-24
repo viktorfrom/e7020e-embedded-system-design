@@ -1,22 +1,14 @@
-use ssd1306::{interface::{DisplayInterface, SpiInterface}, prelude::*, Builder, Error};
+use ssd1306::{interface::SpiInterface, prelude::*, Builder};
 extern crate panic_semihosting;
-use rtfm::app;
-
 
 use stm32l0xx_hal::{
     delay::Delay,
-    exti::TriggerEdge,
     gpio::{
-        gpiob::{PB12, PB13, PB15, PB8, PB9},
+        gpiob::{PB13, PB15, PB8, PB9},
         *,
     },
-    pac,
     pac::SPI2,
-    prelude::*,
-    rcc::Config,
-    spi::{self, Mode, NoMiso, Phase, Polarity, Spi},
-    syscfg,
-    timer::Timer,
+    spi::{NoMiso, Spi},
 };
 
 use embedded_graphics::{
@@ -24,15 +16,19 @@ use embedded_graphics::{
     pixelcolor::BinaryColor,
     prelude::*,
     primitives::{Circle, Rectangle},
-    style::{PrimitiveStyle, PrimitiveStyleBuilder, TextStyle},
+    style::{PrimitiveStyleBuilder, TextStyle},
 };
-
 
 pub struct Oled {
     //pub spi: Spi<SPI2, (PB13<Input<Floating>>, NoMiso, PB15<Input<Floating>>)>,
     pub pb9: PB9<Output<PushPull>>,
     pub delay: Delay,
-    pub disp: GraphicsMode<SpiInterface<Spi<SPI2, (PB13<Input<Floating>>, NoMiso, PB15<Input<Floating>>)>, PB8<Output<PushPull>>>>,
+    pub disp: GraphicsMode<
+        SpiInterface<
+            Spi<SPI2, (PB13<Input<Floating>>, NoMiso, PB15<Input<Floating>>)>,
+            PB8<Output<PushPull>>,
+        >,
+    >,
     pub state: bool,
 }
 
@@ -56,9 +52,9 @@ impl Oled {
 
     /// Turns on the oled
     pub fn on(&mut self) {
-        let mut res = &mut self.pb9;
+        let res = &mut self.pb9;
 
-        //self.disp.reset(&mut res, &mut self.delay).unwrap();
+        self.disp.reset(res, &mut self.delay).unwrap();
         self.disp.init().unwrap();
 
         self.disp.clear();
