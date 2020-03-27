@@ -15,8 +15,17 @@ embedded-hal            = "0.2.3"
 crc16                   = "0.4.0"
 heapless                = "0.5.1"
 postcard                = "0.4.2"
-#longfi-device           = { git = "https://git.grepit.se/grepit/lora-rs.git" }
-#communicator            = { git = "https://git.grepit.se/grepit/communicator.git" }
+
+[dependencies.longfi-device]
+#git = "https://git.grepit.se/grepit/lora-rs.git" 
+git = "https://git.grepit.se/viktor.sonesten/lora-rs.git"
+branch = "ltu-es"
+optional = true
+
+[dependencies.communicator]
+path = "../communicator"
+#git = "https://git.grepit.se/grepit/communicator.git"
+optional = true
 
 [dependencies.ssd1306]
 version = "=0.3.0-alpha.4"
@@ -38,6 +47,7 @@ version         = "0.6.12"
 
 [dependencies.cortex-m-rtfm]
 version         = "0.5.1"
+#version         = "0.4.3"
 
 [dependencies.stm32l0xx-hal]
 version         = "0.5.0"
@@ -47,11 +57,27 @@ features        = ["stm32l0x2", "rt"]
 version         = "0.1.4"
 default-features = false 
 
+[features]
+radio = ["longfi-device", "communicator"]
+
 # this lets you use `cargo fix`!
 [[bin]]
 name            = "e7020e-embedded-system-design"
 test            = false
 bench           = false
+required-features = ["radio"]
+
+[[example]]
+name            = "breathalyzer"
+
+[[example]]
+name            = "buzzer"
+
+[[example]]
+name            = "oled"
+
+[[example]]
+name            = "oled2"
 
 [profile.dev]
 opt-level       = 1
