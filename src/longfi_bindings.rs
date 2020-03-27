@@ -79,8 +79,8 @@ pub extern "C" fn set_antenna_pins(mode: AntPinsMode, _power: u8) {
     }
 }
 
-static mut EN_TCXO: Option<stm32l0xx_hal::gpio::gpioa::PA8<Output<PushPull>>> = None;
-pub fn set_tcxo_pins(pin: stm32l0xx_hal::gpio::gpioa::PA8<Output<PushPull>>) {
+static mut EN_TCXO: Option<stm32l0xx_hal::gpio::gpiob::PB5<Output<PushPull>>> = None;
+pub fn set_tcxo_pins(pin: stm32l0xx_hal::gpio::gpiob::PB5<Output<PushPull>>) {
     unsafe {
         EN_TCXO = Some(pin);
     }

@@ -4,9 +4,15 @@
 
 mod breathalyzer;
 mod buzzer;
+mod longfi_bindings;
 //mod oled;
 
 extern crate panic_semihosting;
+
+use longfi_bindings::AntennaSwitches;
+use longfi_device::{self, ClientEvent, LongFi, RfConfig, RfEvent};
+use communicator::{Message, Channel};
+use heapless::consts::*;
 
 use crate::breathalyzer::Breathalyzer;
 use crate::buzzer::Buzzer;
@@ -17,7 +23,6 @@ use stm32l0xx_hal as hal;
 //use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
-    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, syscfg, timer,
     adc,
     exti::TriggerEdge,
     gpio::*,
@@ -25,12 +30,15 @@ use stm32l0xx_hal::{
     prelude::*,
     rcc::Config,
     spi::{self, Mode, NoMiso, Phase, Polarity},
-    syscfg, timer,
+    syscfg, 
+    timer,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {
+        #[init([0; 512])]
+        BUFFER: [u8; 512],
         EXT: pac::EXTI,
         BUTTON: gpioa::PA4<Input<PullUp>>,
         TIMER_BREATH: timer::Timer<pac::TIM2>,
@@ -38,10 +46,12 @@ const APP: () = {
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
         BUZZER: Buzzer,
+        LONGFI: LongFi,
+        RADIO_EXTI: gpiob::PB4<Input<PullUp>>,
         //OLED: Oled,
     }
 
-    #[init]
+    #[init(resources = [BUFFER])]
     fn init(cx: init::Context) -> init::LateResources {
         // Configure the clock.
         let mut rcc = cx.device.RCC.freeze(Config::hsi16());
@@ -58,6 +68,7 @@ const APP: () = {
 
         // Configure inputs
         let button = gpioa.pa4.into_pull_up_input();
+        let radio_int = gpiob.pb4.into_pull_up_input();
 
         // Configure timers
         let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
@@ -75,12 +86,65 @@ const APP: () = {
             TriggerEdge::Falling,
         );
 
+        exti.listen(
+            &mut syscfg,
+            radio_int.port(),
+            radio_int.pin_number(),
+            TriggerEdge::Rising,
+        );
+
         tim2.listen();
         tim3.listen();
 
+        // Initialize radio.
+        let radio_sck = gpiob.pb3;
+        let radio_miso = gpioa.pa6;
+        let radio_mosi = gpioa.pa7;
+        let radio_nss = gpioa.pa15.into_push_pull_output();
+        longfi_bindings::set_spi_nss(radio_nss);
+
+        let mut spi1 = cx.device
+            .SPI1
+            .spi((radio_sck, radio_miso, radio_mosi), spi::MODE_0, 1_000_000.hz(), &mut rcc);
+
+        let radio_reset = gpioc.pc0.into_push_pull_output();
+        longfi_bindings::set_radio_reset(radio_reset);
+    
+        let ant_sw = AntennaSwitches::new(
+            gpioa.pa1.into_push_pull_output(),
+            gpioc.pc2.into_push_pull_output(),
+            gpioc.pc1.into_push_pull_output(),
+        );
+
+        longfi_bindings::set_antenna_switch(ant_sw);
+
+        let en_tcxo = gpiob.pb5.into_push_pull_output();
+        longfi_bindings::set_tcxo_pins(en_tcxo);
+
+        static mut BINDINGS: longfi_device::BoardBindings = longfi_device::BoardBindings {
+            reset: Some(longfi_bindings::radio_reset),
+            spi_in_out: Some(longfi_bindings::spi_in_out),
+            spi_nss: Some(longfi_bindings::spi_nss),
+            delay_ms: Some(longfi_bindings::delay_ms),
+            get_random_bits: Some(longfi_bindings::get_random_bits),
+            set_antenna_pins: Some(longfi_bindings::set_antenna_pins),
+            set_board_tcxo: Some(longfi_bindings::set_tcxo),
+        };
+
+        let rf_config = RfConfig {
+            oui: 0xBEEF_FEED,
+            device_id: 0xABCD,
+        };
+
+        let mut longfi_radio = unsafe { LongFi::new(&mut BINDINGS, rf_config).unwrap() };
+
+        longfi_radio.set_buffer(cx.resources.BUFFER);
+
+        longfi_radio.receive();
+
         // Initialize OLED
         let mut cs = gpiob.pb12.into_push_pull_output();
-        cs.set_low(); // not sure if needed, did not try without it
+        cs.set_low().unwrap(); // not sure if needed, did not try without it
 
         let sck = gpiob.pb13;
         let mosi = gpiob.pb15;
@@ -90,8 +154,6 @@ const APP: () = {
             cx.device
                 .SPI2
                 .spi((sck, NoMiso, mosi), spi::MODE_0, 1_000_000.hz(), &mut rcc);
-
-        // let nss = gpioa.pa15.into_push_pull_output();
 
         // Initialize modules
         let mut buzzer = Buzzer::new(gpioa.pa3);
@@ -107,12 +169,67 @@ const APP: () = {
             TIMER_PWM_INTERVAL: tim21,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer,
+            LONGFI: longfi_radio,
+            RADIO_EXTI: radio_int
             //OLED: oled,
         }
     }
 
+    //#[task(binds = EXTI4_15)]
+    //fn exti4_15(cx: exti4_15::Context) {}
+
+    #[task(capacity = 4, priority = 2, resources = [BUFFER, LONGFI, STATE, COUNTER_1, COUNTER_2])]
+    fn radio_event(event: RfEvent) {
+        let mut longfi_radio = resources.LONGFI;
+        let client_event = longfi_radio.handle_event(event);
+        match client_event {
+            ClientEvent::ClientEvent_TxDone => {
+                hprintln!("transmission done").unwrap();
+                longfi_radio.receive();
+            }
+            ClientEvent::ClientEvent_Rx => {
+                let rx_packet = longfi_radio.get_rx();
+
+                {
+                    let buf = unsafe {
+                        core::slice::from_raw_parts(rx_packet.buf, rx_packet.len as usize)
+                    };
+
+                    hprintln!("rx len {}", rx_packet.len).unwrap();
+
+                    hprintln!("before").unwrap();
+                    let message = Message::deserialize(buf);
+                    
+                    if let Some(message) = message {
+                        hprintln!("parse").unwrap();
+                        // Let's assume we only have permission to use ID 2:
+                        if message.id != 2 {
+                            longfi_radio.set_buffer(resources.BUFFER);
+                            longfi_radio.receive();
+                            hprintln!("wrong address").unwrap();
+                            return;
+                        }
+
+                        hprintln!("sending message").unwrap();
+                        let binary = application(
+                            message,
+                            resources.COUNTER_1,
+                            resources.COUNTER_2,
+                            resources.STATE,
+                        );
+                        longfi_radio.send(&binary);
+                    }
+                }
+
+                longfi_radio.set_buffer(resources.BUFFER);
+                longfi_radio.receive();
+            }
+            ClientEvent::ClientEvent_None => {}
+        }
+    }
+
     // Handles the button press
-    #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
 
@@ -133,7 +250,7 @@ const APP: () = {
     }
 
     // Polls the alcohol sensor
-    #[task(binds = TIM2, priority = 5, resources = [BREATHALYZER, TIMER_BREATH])]
+    #[task(binds = TIM2, priority = 2, resources = [BREATHALYZER, TIMER_BREATH])]
     fn sensor_poll(cx: sensor_poll::Context) {
         cx.resources.TIMER_BREATH.clear_irq();
 
@@ -144,7 +261,7 @@ const APP: () = {
     }
 
     // Toggles the buzzer's PWM according to the set frequency
-    #[task(binds = TIM3, priority = 5, resources = [BUZZER, TIMER_PWM])]
+    #[task(binds = TIM3, priority = 2, resources = [BUZZER, TIMER_PWM])]
     fn buzzer_pwm(cx: buzzer_pwm::Context) {
         cx.resources.TIMER_PWM.clear_irq();
 
@@ -155,7 +272,7 @@ const APP: () = {
     }
 
     // Toggles buzzer beep intervals
-    #[task(binds = TIM21, priority = 5, resources = [BUZZER, TIMER_PWM_INTERVAL])]
+    #[task(binds = TIM21, priority = 2, resources = [BUZZER, TIMER_PWM_INTERVAL])]
     fn buzzer_interval(cx: buzzer_interval::Context) {
         cx.resources.TIMER_PWM_INTERVAL.clear_irq();
 
