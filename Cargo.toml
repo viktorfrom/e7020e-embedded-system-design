@@ -79,6 +79,10 @@ name            = "oled"
 [[example]]
 name            = "oled2"
 
+[[example]]
+name            = "radio"
+required-features = ["radio"]
+
 [profile.dev]
 opt-level       = 1
 #codegen-units   = 16
