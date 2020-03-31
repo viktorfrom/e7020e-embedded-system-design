@@ -20,7 +20,7 @@ use crate::buzzer::Buzzer;
 use cortex_m::peripheral::DWT;
 use stm32l0xx_hal as hal;
 // hprintln is very resource demanding, only use for testing non-time critical things!
-//use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
     adc,
@@ -40,7 +40,8 @@ const APP: () = {
         #[init([0; 512])]
         BUFFER: [u8; 512],
         EXT: pac::EXTI,
-        BUTTON: gpioa::PA4<Input<PullUp>>,
+        //BUTTON: gpioa::PA4<Input<PullUp>>,
+        BUTTON: gpiob::PB2<Input<PullUp>>,
         TIMER_BREATH: timer::Timer<pac::TIM2>,
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
@@ -67,7 +68,8 @@ const APP: () = {
         let gpioc = cx.device.GPIOC.split(&mut rcc);
 
         // Configure inputs
-        let button = gpioa.pa4.into_pull_up_input();
+        //let button = gpioa.pa4.into_pull_up_input();
+        let button = gpiob.pb2.into_pull_up_input();
         let radio_int = gpiob.pb4.into_pull_up_input();
 
         // Configure timers
@@ -81,16 +83,16 @@ const APP: () = {
         // Configure interrupts
         exti.listen(
             &mut syscfg,
-            button.port(),
-            button.pin_number(),
-            TriggerEdge::Falling,
+            radio_int.port(),
+            radio_int.pin_number(),
+            TriggerEdge::Rising,
         );
 
         exti.listen(
             &mut syscfg,
-            radio_int.port(),
-            radio_int.pin_number(),
-            TriggerEdge::Rising,
+            button.port(),
+            button.pin_number(),
+            TriggerEdge::Falling,
         );
 
         tim2.listen();
@@ -175,18 +177,30 @@ const APP: () = {
         }
     }
 
-    //#[task(binds = EXTI4_15)]
-    //fn exti4_15(cx: exti4_15::Context) {}
+    // External interrupt for the button
+    #[task(binds = EXTI2_3, priority = 2, spawn = [button_event], resources = [EXT, BUTTON])]
+    fn exti2_3(cx: exti2_3::Context) {
+        hprintln!("EXTI2_3").unwrap();
+        cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
+        cx.spawn.button_event().unwrap();
+    }
 
-    #[task(capacity = 4, priority = 2, resources = [BUFFER, LONGFI, STATE, COUNTER_1, COUNTER_2])]
-    fn radio_event(event: RfEvent) {
-        let mut longfi_radio = resources.LONGFI;
+    // External interrupt for the radio
+    #[task(binds = EXTI4_15, priority = 2, spawn = [radio_event], resources = [EXT, RADIO_EXTI])]
+    fn exti4_15(cx: exti4_15::Context) {
+        cx.resources.EXT.clear_irq(cx.resources.RADIO_EXTI.pin_number());
+        cx.spawn.radio_event(RfEvent::DIO0).unwrap();
+    }
+
+    #[task(capacity = 4, priority = 2, resources = [BUFFER, LONGFI])]
+    fn radio_event(cx: radio_event::Context, event: RfEvent) {
+        let mut longfi_radio = cx.resources.LONGFI;
         let client_event = longfi_radio.handle_event(event);
         match client_event {
             ClientEvent::ClientEvent_TxDone => {
                 hprintln!("transmission done").unwrap();
                 longfi_radio.receive();
-            }
+            },
             ClientEvent::ClientEvent_Rx => {
                 let rx_packet = longfi_radio.get_rx();
 
@@ -203,25 +217,16 @@ const APP: () = {
                     if let Some(message) = message {
                         hprintln!("parse").unwrap();
                         // Let's assume we only have permission to use ID 2:
-                        if message.id != 2 {
-                            longfi_radio.set_buffer(resources.BUFFER);
+                        if message.id != 6 {
+                            longfi_radio.set_buffer(cx.resources.BUFFER);
                             longfi_radio.receive();
                             hprintln!("wrong address").unwrap();
                             return;
                         }
-
-                        hprintln!("sending message").unwrap();
-                        let binary = application(
-                            message,
-                            resources.COUNTER_1,
-                            resources.COUNTER_2,
-                            resources.STATE,
-                        );
-                        longfi_radio.send(&binary);
                     }
                 }
 
-                longfi_radio.set_buffer(resources.BUFFER);
+                longfi_radio.set_buffer(cx.resources.BUFFER);
                 longfi_radio.receive();
             }
             ClientEvent::ClientEvent_None => {}
@@ -229,10 +234,9 @@ const APP: () = {
     }
 
     // Handles the button press
-    #[task(binds = EXTI4_15, priority = 2, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(priority = 2, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
-        cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
-
+        hprintln!("inside button event").unwrap();
         if cx.resources.BUZZER.enabled {
             cx.resources.BUZZER.disable();
             cx.resources.TIMER_PWM_INTERVAL.unlisten();
