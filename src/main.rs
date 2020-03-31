@@ -29,11 +29,14 @@ use stm32l0xx_hal::{
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {
+        #[init(0)]
+        COUNT: u16,
         EXT: pac::EXTI,
         BUTTON: gpioa::PA4<Input<PullUp>>,
         TIMER_BREATH: timer::Timer<pac::TIM2>,
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
+        TIMER_WARM_UP: timer::Timer<pac::TIM22>,
         BREATHALYZER: Breathalyzer,
         BUZZER: Buzzer,
         OLED: Oled,
@@ -61,6 +64,8 @@ const APP: () = {
         let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
         let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
         let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 1000.ms(), &mut rcc);
+        let mut tim22 = timer::Timer::tim22(cx.device.TIM22, 1000.ms(), &mut rcc);
+
 
         // External interrupt
         let exti = cx.device.EXTI;
@@ -75,6 +80,7 @@ const APP: () = {
 
         tim2.listen();
         tim3.listen();
+        tim22.listen();
 
         // Initialize OLED
         let mut cs = gpiob.pb12.into_push_pull_output();
@@ -96,6 +102,8 @@ const APP: () = {
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
         let mut oled = Oled::new(spi, gpiob.pb8, gpiob.pb9, delay);
 
+
+
         // Return the initialised resources.
         init::LateResources {
             EXT: exti,
@@ -103,12 +111,13 @@ const APP: () = {
             TIMER_BREATH: tim2,
             TIMER_PWM: tim3,
             TIMER_PWM_INTERVAL: tim21,
+            TIMER_WARM_UP: tim22,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer,
             OLED: oled,
         }
     }
-
+ 
     // Handles the button press
     #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, OLED, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
@@ -129,11 +138,11 @@ const APP: () = {
             cx.resources.BREATHALYZER.on();
         }
 
-        if cx.resources.OLED.state  { 
-            cx.resources.OLED.off();
-        } else { 
-            cx.resources.OLED.on();
-        } 
+        //if cx.resources.OLED.state {
+        //    cx.resources.OLED.off();
+        //} else {
+            cx.resources.OLED.on("");
+        //}
     }
 
     // Polls the alcohol sensor
@@ -168,6 +177,22 @@ const APP: () = {
         } else {
             cx.resources.BUZZER.enable();
         }
+    }
+
+    // Device warm up
+    #[task(binds = TIM22, priority = 5, resources = [OLED, COUNT, TIMER_WARM_UP])]
+    fn warm_up(cx: warm_up::Context) {
+        cx.resources.TIMER_WARM_UP.clear_irq();
+
+        if  *cx.resources.COUNT != 10 {
+            cx.resources.OLED.on("Warming up");
+            *cx.resources.COUNT += 1;
+        } else {
+            cx.resources.OLED.on("");
+            *cx.resources.COUNT = 0;
+            cx.resources.TIMER_WARM_UP.unlisten();
+        }
+
     }
 
     // Interrupt handlers used to dispatch software tasks

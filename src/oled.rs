@@ -12,7 +12,7 @@ use stm32l0xx_hal::{
 };
 
 use embedded_graphics::{
-    fonts::{Font12x16, Font6x12, Text},
+    fonts::{Font8x16, Font6x12, Text},
     pixelcolor::BinaryColor,
     prelude::*,
     primitives::{Circle, Rectangle},
@@ -29,6 +29,10 @@ pub struct Oled {
             PB8<Output<PushPull>>,
         >,
     >,
+    pub style1:
+        embedded_graphics::style::PrimitiveStyle<embedded_graphics::pixelcolor::BinaryColor>,
+    pub style2:
+        embedded_graphics::style::PrimitiveStyle<embedded_graphics::pixelcolor::BinaryColor>,
     pub state: bool,
 }
 
@@ -45,47 +49,53 @@ impl Oled {
                 .connect_spi(spi, pb8.into_push_pull_output())
                 .into(),
             delay: delay,
+            style1: PrimitiveStyleBuilder::new()
+                .stroke_color(BinaryColor::On)
+                .stroke_width(2)
+                .fill_color(BinaryColor::On)
+                .build(),
+            style2: PrimitiveStyleBuilder::new()
+                .stroke_color(BinaryColor::On)
+                .stroke_width(2)
+                .fill_color(BinaryColor::Off)
+                .build(),
             state: false,
         }
     }
 
-    pub fn on(&mut self) {
+
+    pub fn on(&mut self, input: &str) {
         let res = &mut self.pb9;
+        let message: &str;
 
         self.disp.reset(res, &mut self.delay).unwrap();
         self.disp.init().unwrap();
 
         self.disp.clear();
 
-        let style1 = PrimitiveStyleBuilder::new()
-            .stroke_color(BinaryColor::On)
-            .stroke_width(2)
-            .fill_color(BinaryColor::On)
-            .build();
-
-        let style2 = PrimitiveStyleBuilder::new()
-            .stroke_color(BinaryColor::On)
-            .stroke_width(2)
-            .fill_color(BinaryColor::Off)
-            .build();
-
         Circle::new(Point::new(27, 23), 5)
-            .into_styled(style2)
+            .into_styled(self.style2)
             .draw(&mut self.disp);
 
         Rectangle::new(Point::new(10, 20), Point::new(25, 35))
-            .into_styled(style1)
+            .into_styled(self.style1)
             .draw(&mut self.disp);
 
         Rectangle::new(Point::new(10, 15), Point::new(25, 20))
-            .into_styled(style2)
+            .into_styled(self.style2)
             .draw(&mut self.disp);
 
-        let t1 = Text::new("~ Breathalyzer", Point::new(35, 16))
+        let t1 = Text::new("Breathalyzer", Point::new(40, 16))
             .into_styled(TextStyle::new(Font6x12, BinaryColor::On));
+            
+        if input != "" {
+            message = input;
+        } else {
+            message = "Ready";
+        }
 
-        let t2 = Text::new(" 0.0002", Point::new(35, 35))
-            .into_styled(TextStyle::new(Font12x16, BinaryColor::On));
+        let t2 = Text::new( message, Point::new(40, 35))
+            .into_styled(TextStyle::new(Font8x16, BinaryColor::On));
 
         t1.draw(&mut self.disp);
         t2.draw(&mut self.disp);
