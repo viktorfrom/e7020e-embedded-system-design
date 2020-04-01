@@ -13,17 +13,6 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
-$Comp
-L pcbdesign-rescue:CMWX1ZZABZ-078-cmwx1zzabz-078 U1
-U 1 1 5E390DC8
-P 7400 3550
-F 0 "U1" H 7400 1961 50  0000 C CNN
-F 1 "CMWX1ZZABZ-078" H 7400 1870 50  0000 C CNN
-F 2 "ProjectPCB:CMWX1ZZABZ_longer_pads" H 7400 3550 50  0001 C CNN
-F 3 "https://wireless.murata.com/RFM/data/type_abz.pdf" H 9850 2050 50  0001 C CNN
-	1    7400 3550
-	1    0    0    -1  
-$EndComp
 Text Label 5750 3800 0    50   ~ 0
 SWCLK
 Text Label 5750 3600 0    50   ~ 0
@@ -675,7 +664,6 @@ F 3 "" H 10350 4800 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	10350 4450 10350 4800
-NoConn ~ 6500 4850
 $Comp
 L power:+5V #PWR0108
 U 1 1 5E438F08
@@ -1027,4 +1015,47 @@ Text Label 6200 2950 0    50   ~ 0
 BUTTON
 Wire Wire Line
 	6500 2950 6200 2950
+$Comp
+L pcbdesign-rescue:CMWX1ZZABZ-078-cmwx1zzabz-078 U1
+U 1 1 5E390DC8
+P 7400 3550
+F 0 "U1" H 7400 1961 50  0000 C CNN
+F 1 "CMWX1ZZABZ-078" H 7400 1870 50  0000 C CNN
+F 2 "ProjectPCB:CMWX1ZZABZ_longer_pads" H 7400 3550 50  0001 C CNN
+F 3 "https://wireless.murata.com/RFM/data/type_abz.pdf" H 9850 2050 50  0001 C CNN
+	1    7400 3550
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5E596E1C
+P 6800 5750
+F 0 "#PWR?" H 6800 5500 50  0001 C CNN
+F 1 "GND" H 6805 5577 50  0000 C CNN
+F 2 "" H 6800 5750 50  0001 C CNN
+F 3 "" H 6800 5750 50  0001 C CNN
+	1    6800 5750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R 10k
+U 1 1 5E5A6329
+P 6350 5350
+F 0 "10k" H 6420 5396 50  0000 L CNN
+F 1 "R" H 6420 5305 50  0000 L CNN
+F 2 "" V 6280 5350 50  0001 C CNN
+F 3 "~" H 6350 5350 50  0001 C CNN
+	1    6350 5350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6500 4850 6350 4850
+Wire Wire Line
+	6350 4850 6350 5200
+Wire Wire Line
+	6350 5500 6350 5600
+Wire Wire Line
+	6350 5600 6800 5600
+Wire Wire Line
+	6800 5600 6800 5750
 $EndSCHEMATC
