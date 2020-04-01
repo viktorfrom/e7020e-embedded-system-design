@@ -8,9 +8,12 @@ use stm32l0xx_hal::{
 };
 
 pub enum BAC {
+    NONE,
     LOW,
     MEDIUM,
     HIGH,
+    VERY_HIGH,
+    DEATH
 }
 
 pub struct Breathalyzer {
