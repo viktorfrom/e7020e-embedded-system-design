@@ -13,8 +13,9 @@ use longfi_bindings::AntennaSwitches;
 use longfi_device::{self, ClientEvent, LongFi, RfConfig, RfEvent};
 use communicator::{Message, Channel};
 use heapless::consts::*;
+use core::str::from_utf8;
 
-use crate::breathalyzer::Breathalyzer;
+use crate::breathalyzer::{Breathalyzer, BAC};
 use crate::buzzer::Buzzer;
 //use crate::oled::Oled;
 use cortex_m::peripheral::DWT;
@@ -38,7 +39,7 @@ use stm32l0xx_hal::{
 const APP: () = {
     struct Resources {
         #[init([0; 512])]
-        BUFFER: [u8; 512],
+        BUFFER: [u8; 512], 
         EXT: pac::EXTI,
         //BUTTON: gpioa::PA4<Input<PullUp>>,
         BUTTON: gpiob::PB2<Input<PullUp>>,
@@ -46,6 +47,8 @@ const APP: () = {
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
+        #[init(BAC::DEATH)]
+        BREATHALYZER_RESULT: BAC,
         BUZZER: Buzzer,
         LONGFI: LongFi,
         RADIO_EXTI: gpiob::PB4<Input<PullUp>>,
@@ -188,14 +191,16 @@ const APP: () = {
     // External interrupt for the radio
     #[task(binds = EXTI4_15, priority = 2, spawn = [radio_event], resources = [EXT, RADIO_EXTI])]
     fn exti4_15(cx: exti4_15::Context) {
+        hprintln!("EXTI4_15").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.RADIO_EXTI.pin_number());
         cx.spawn.radio_event(RfEvent::DIO0).unwrap();
     }
 
-    #[task(capacity = 4, priority = 2, resources = [BUFFER, LONGFI])]
+    #[task(capacity = 4, priority = 2, spawn = [button_event], resources = [BUFFER, LONGFI])]
     fn radio_event(cx: radio_event::Context, event: RfEvent) {
         let mut longfi_radio = cx.resources.LONGFI;
         let client_event = longfi_radio.handle_event(event);
+
         match client_event {
             ClientEvent::ClientEvent_TxDone => {
                 hprintln!("transmission done").unwrap();
@@ -210,18 +215,14 @@ const APP: () = {
                     };
 
                     hprintln!("rx len {}", rx_packet.len).unwrap();
-
-                    hprintln!("before").unwrap();
+;
                     let message = Message::deserialize(buf);
-                    
+
                     if let Some(message) = message {
                         hprintln!("parse").unwrap();
-                        // Let's assume we only have permission to use ID 2:
-                        if message.id != 6 {
-                            longfi_radio.set_buffer(cx.resources.BUFFER);
-                            longfi_radio.receive();
-                            hprintln!("wrong address").unwrap();
-                            return;
+                        // Let's assume we only have permission to use ID 6:
+                        if message.id == 6 {
+                            cx.spawn.button_event().unwrap();
                         }
                     }
                 }
@@ -233,8 +234,30 @@ const APP: () = {
         }
     }
 
+    #[task(capacity = 4, priority = 2, resources = [BREATHALYZER_RESULT, LONGFI])]
+    fn send_radio_message(cx: send_radio_message::Context) {
+        let bac_convert = match cx.resources.BREATHALYZER_RESULT {
+            BAC::NONE => 0,
+            BAC::LOW => 1,
+            BAC::MEDIUM => 2,
+            BAC::HIGH => 3,
+            BAC::VERY_HIGH => 4,
+            BAC::DEATH => 5
+        };
+
+        let message = Message {
+            id: 6,
+            data: bac_convert,
+            channel: Channel::One
+        };
+    
+        let binary = Message::serialize(&message).unwrap();
+        cx.resources.LONGFI.send(&binary);
+    }
+
+
     // Handles the button press
-    #[task(priority = 2, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(priority = 2, spawn = [send_radio_message], resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         hprintln!("inside button event").unwrap();
         if cx.resources.BUZZER.enabled {
@@ -251,6 +274,8 @@ const APP: () = {
         } else {
             cx.resources.BREATHALYZER.on();
         }
+
+        cx.spawn.send_radio_message().unwrap();
     }
 
     // Polls the alcohol sensor
