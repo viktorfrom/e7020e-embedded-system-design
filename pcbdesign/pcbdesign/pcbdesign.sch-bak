@@ -128,17 +128,6 @@ Connection ~ 7200 1150
 Wire Wire Line
 	7300 2050 7300 1950
 Wire Wire Line
-	7300 1950 7950 1950
-Wire Wire Line
-	7400 2050 7400 2000
-Wire Wire Line
-	7400 2000 7950 2000
-Wire Wire Line
-	7950 2000 7950 1950
-Connection ~ 7950 1950
-Wire Wire Line
-	7950 1950 8200 1950
-Wire Wire Line
 	8200 1950 8200 1550
 Connection ~ 8200 1950
 Connection ~ 8200 1550
@@ -461,9 +450,6 @@ NoConn ~ 8300 3450
 NoConn ~ 8300 2950
 NoConn ~ 8300 2850
 NoConn ~ 8300 2750
-NoConn ~ 8300 2650
-NoConn ~ 7500 2050
-NoConn ~ 7600 2050
 $Comp
 L Connector:Conn_01x04_Male Breathalizer1
 U 1 1 5E3B0FFE
@@ -486,7 +472,6 @@ F 3 "" H 5900 5800 50  0001 C CNN
 	1    5900 5800
 	0    -1   -1   0   
 $EndComp
-NoConn ~ 5550 6100
 Text Label 7000 6200 0    50   ~ 0
 DAT
 Wire Wire Line
@@ -737,7 +722,6 @@ Text Label 8700 3550 0    50   ~ 0
 D1
 Wire Wire Line
 	8300 3550 8700 3550
-NoConn ~ 6500 3050
 Text Label 8700 3050 0    50   ~ 0
 DC
 Text Label 8700 3150 0    50   ~ 0
@@ -1011,10 +995,6 @@ Wire Wire Line
 	3200 3450 3200 3800
 Text Label 3200 3350 0    50   ~ 0
 BUTTON
-Text Label 6200 2950 0    50   ~ 0
-BUTTON
-Wire Wire Line
-	6500 2950 6200 2950
 $Comp
 L pcbdesign-rescue:CMWX1ZZABZ-078-cmwx1zzabz-078 U1
 U 1 1 5E390DC8
@@ -1058,4 +1038,34 @@ Wire Wire Line
 	6350 5600 6800 5600
 Wire Wire Line
 	6800 5600 6800 5750
+Text Label 8700 2650 0    50   ~ 0
+BUTTON
+Wire Wire Line
+	8300 2650 8700 2650
+NoConn ~ 6500 2950
+Wire Wire Line
+	7300 1950 7400 1950
+Wire Wire Line
+	7400 1950 7400 2050
+Connection ~ 7400 1950
+Wire Wire Line
+	7400 1950 7500 1950
+Wire Wire Line
+	7500 2050 7500 1950
+Connection ~ 7500 1950
+Wire Wire Line
+	7500 1950 7600 1950
+Wire Wire Line
+	7600 2050 7600 1950
+Connection ~ 7600 1950
+Wire Wire Line
+	7600 1950 8200 1950
+Text Label 6150 6100 0    50   ~ 0
+SCL
+Wire Wire Line
+	5550 6100 6150 6100
+Text Label 6050 3050 0    50   ~ 0
+SCL
+Wire Wire Line
+	6050 3050 6500 3050
 $EndSCHEMATC
