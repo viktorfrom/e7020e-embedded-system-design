@@ -46,7 +46,7 @@ cargo install cargo-binutils
 ```
 
 ### Linux
-Below are the absolute minimum packages you will need for Linux. Names might vary depending on your distrobution, you might need to install it manually if you can't find it using your distrobution's package manager.
+Below are the absolute minimum packages you will need for Linux. Names might vary depending on your distribution, you might need to install it manually if you can't find it using your distribution's package manager.
 ```
 openocd
 arm-none-eabi-gdb
