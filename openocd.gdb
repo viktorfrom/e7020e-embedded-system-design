@@ -21,7 +21,7 @@ monitor reset init
 load
 
 # un-comment to start and immediately halt the processor
-stepi
+# stepi
 
 # un-comment to start and continue
-# continue
+continue
