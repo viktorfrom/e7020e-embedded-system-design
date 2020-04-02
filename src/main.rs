@@ -288,7 +288,7 @@ const APP: () = {
         // }
         
         // Send radio message, place this wherever it is needed
-        cx.spawn.send_radio_message(BAC::LOW);
+        cx.spawn.send_radio_message(BAC::LOW).unwrap();
     }
 
     // Polls the alcohol sensor

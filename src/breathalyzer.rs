@@ -7,6 +7,7 @@ use stm32l0xx_hal::{
     prelude::*,
 };
 
+#[derive(Debug)]
 pub enum BAC {
     NONE,
     LOW,
