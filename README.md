@@ -25,7 +25,7 @@ There is no sure way to calibrate this device as the project team does not have 
 
 ## Requirements
 * Rustup 1.14.0+
-* rustc 1.31.0+
+* rustc 1.31.0+ (stable)
 * GNU ARM embedded toolchain (check your package manager or manually install it)
 * OpenOCD
 
@@ -34,11 +34,6 @@ There is no sure way to calibrate this device as the project team does not have 
 ### rustc & cargo
 Install rustup by following the instructions at https://rustup.rs.
 
-If you already have rustup installed double check that you are on the stable channel and your stable toolchain is up to date. rustc -V should return a date newer than the one shown below:
-```
-rustc -V
-rustc 1.31.0 (abe02cefd 2018-12-04)
-```
 Then install the following tools for rustup and cargo:
 ```
 rustup component add llvm-tools-preview
@@ -49,8 +44,9 @@ rustup target add thumbv6m-none-eabi
 ```
 cargo install cargo-binutils
 ```
+
 ### Linux
-Below are the packages you will need for Linux. Names might vary depending on your distrobution, you might need to install it manually if you can't find it using your distrobution's package manager.
+Below are the absolute minimum packages you will need for Linux. Names might vary depending on your distrobution, you might need to install it manually if you can't find it using your distrobution's package manager.
 ```
 openocd
 arm-none-eabi-gdb
@@ -67,12 +63,20 @@ brew install openocd
 ```
 
 ## Build instructions
-For the F3, we'll to use the thumbv7em-none-eabihf target. Before cross compiling you have to download pre-compiled version of the standard library (a reduced version of it actually) for your target. That's done using rustup:
+First confirm that the correct runner is chosen in _.cargo/config_, as the gdb package name might be different depending on you OS. Then build the project
 ```
-rustup target add thumbv7em-none-eabihf
+cargo build --features="radio"
 ```
 
-
+### Flashing
+Connect to the card using the Nucleo F401RE dev board as a programmer with the given configuration
+```
+openocd -f openocd.cfg
+```
+Then build the project and flash the card
+```
+cargo run --features="radio"
+```
 
 ## Authors
 * Viktor From - vikfro-6@student.ltu.se - [viktorfrom](https://github.com/viktorfrom)
