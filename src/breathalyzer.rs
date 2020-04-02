@@ -9,12 +9,14 @@ use stm32l0xx_hal::{
     prelude::*,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum BAC {
     NONE,
     LOW,
     MEDIUM,
     HIGH,
+    VERY_HIGH,
+    DEATH
 }
 
 pub struct Breathalyzer {
@@ -53,12 +55,16 @@ impl Breathalyzer {
         let val: u16 = self.adc.read(&mut self.dat).unwrap();
         //hprintln!("{:#} / {:#} = {:#}", val, self.curr_val, (val * 100) / self.curr_val).unwrap();
 
-        if ((val * 100) / self.curr_val) >= 90 {
+        if ((val * 100) / self.curr_val) >= 93 {
             return BAC::LOW;
-        } else if ((val * 100) / self.curr_val) >= 80 {
+        } else if ((val * 100) / self.curr_val) >= 85 {
             return BAC::MEDIUM;
-        } else if ((val * 100) / self.curr_val) >= 65 {
+        } else if ((val * 100) / self.curr_val) >= 77 {
             return BAC::HIGH;
+        } else if ((val * 100) / self.curr_val) >= 69 {
+            return BAC::VERY_HIGH;
+        } else if ((val * 100) / self.curr_val) >= 61 {
+            return BAC::DEATH;
         } else {
             return BAC::NONE;
         }

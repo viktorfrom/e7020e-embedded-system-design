@@ -128,17 +128,6 @@ Connection ~ 7200 1150
 Wire Wire Line
 	7300 2050 7300 1950
 Wire Wire Line
-	7300 1950 7950 1950
-Wire Wire Line
-	7400 2050 7400 2000
-Wire Wire Line
-	7400 2000 7950 2000
-Wire Wire Line
-	7950 2000 7950 1950
-Connection ~ 7950 1950
-Wire Wire Line
-	7950 1950 8200 1950
-Wire Wire Line
 	8200 1950 8200 1550
 Connection ~ 8200 1950
 Connection ~ 8200 1550
@@ -444,8 +433,6 @@ NoConn ~ 6500 3250
 NoConn ~ 6500 3350
 NoConn ~ 6500 3450
 NoConn ~ 6500 3550
-NoConn ~ 6500 4150
-NoConn ~ 6500 4350
 NoConn ~ 6500 4450
 NoConn ~ 6500 4650
 NoConn ~ 8300 4650
@@ -461,9 +448,6 @@ NoConn ~ 8300 3450
 NoConn ~ 8300 2950
 NoConn ~ 8300 2850
 NoConn ~ 8300 2750
-NoConn ~ 8300 2650
-NoConn ~ 7500 2050
-NoConn ~ 7600 2050
 $Comp
 L Connector:Conn_01x04_Male Breathalizer1
 U 1 1 5E3B0FFE
@@ -486,7 +470,6 @@ F 3 "" H 5900 5800 50  0001 C CNN
 	1    5900 5800
 	0    -1   -1   0   
 $EndComp
-NoConn ~ 5550 6100
 Text Label 7000 6200 0    50   ~ 0
 DAT
 Wire Wire Line
@@ -737,7 +720,6 @@ Text Label 8700 3550 0    50   ~ 0
 D1
 Wire Wire Line
 	8300 3550 8700 3550
-NoConn ~ 6500 3050
 Text Label 8700 3050 0    50   ~ 0
 DC
 Text Label 8700 3150 0    50   ~ 0
@@ -1011,10 +993,6 @@ Wire Wire Line
 	3200 3450 3200 3800
 Text Label 3200 3350 0    50   ~ 0
 BUTTON
-Text Label 6200 2950 0    50   ~ 0
-BUTTON
-Wire Wire Line
-	6500 2950 6200 2950
 $Comp
 L pcbdesign-rescue:CMWX1ZZABZ-078-cmwx1zzabz-078 U1
 U 1 1 5E390DC8
@@ -1027,10 +1005,10 @@ F 3 "https://wireless.murata.com/RFM/data/type_abz.pdf" H 9850 2050 50  0001 C C
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR?
+L power:GND #PWR0102
 U 1 1 5E596E1C
 P 6800 5750
-F 0 "#PWR?" H 6800 5500 50  0001 C CNN
+F 0 "#PWR0102" H 6800 5500 50  0001 C CNN
 F 1 "GND" H 6805 5577 50  0000 C CNN
 F 2 "" H 6800 5750 50  0001 C CNN
 F 3 "" H 6800 5750 50  0001 C CNN
@@ -1038,11 +1016,11 @@ F 3 "" H 6800 5750 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:R 10k
+L Device:R R1
 U 1 1 5E5A6329
 P 6350 5350
-F 0 "10k" H 6420 5396 50  0000 L CNN
-F 1 "R" H 6420 5305 50  0000 L CNN
+F 0 "R1" H 6420 5396 50  0000 L CNN
+F 1 "10K" H 6420 5305 50  0000 L CNN
 F 2 "" V 6280 5350 50  0001 C CNN
 F 3 "~" H 6350 5350 50  0001 C CNN
 	1    6350 5350
@@ -1058,4 +1036,40 @@ Wire Wire Line
 	6350 5600 6800 5600
 Wire Wire Line
 	6800 5600 6800 5750
+Text Label 8700 2650 0    50   ~ 0
+BUTTON
+Wire Wire Line
+	8300 2650 8700 2650
+NoConn ~ 6500 2950
+Wire Wire Line
+	7300 1950 7400 1950
+Wire Wire Line
+	7400 1950 7400 2050
+Connection ~ 7400 1950
+Wire Wire Line
+	7400 1950 7500 1950
+Wire Wire Line
+	7500 2050 7500 1950
+Connection ~ 7500 1950
+Wire Wire Line
+	7500 1950 7600 1950
+Wire Wire Line
+	7600 2050 7600 1950
+Connection ~ 7600 1950
+Wire Wire Line
+	7600 1950 8200 1950
+Text Label 6150 6100 0    50   ~ 0
+SCL
+Wire Wire Line
+	5550 6100 6150 6100
+Text Label 6050 3050 0    50   ~ 0
+SCL
+Wire Wire Line
+	6050 3050 6500 3050
+Wire Wire Line
+	6500 4150 6450 4150
+Wire Wire Line
+	6450 4150 6450 4350
+Wire Wire Line
+	6450 4350 6500 4350
 $EndSCHEMATC

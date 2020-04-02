@@ -28,6 +28,16 @@ impl Buzzer {
         self.pin.set_low().unwrap();
     }
 
+    /// Toggle the buzzer status, between enabled and disabled.
+    pub fn toggle_state(&mut self) {
+        if self.enabled {
+            self.disable();
+        } else {
+            self.enable();
+        }
+    }
+
+    /// Toggles pin status between high and low.
     pub fn toggle_pwm(&mut self) {
         if self.enabled {
             if self.on {
