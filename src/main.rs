@@ -5,7 +5,7 @@
 mod breathalyzer;
 mod buzzer;
 mod longfi_bindings;
-//mod oled;
+mod oled;
 
 use longfi_bindings::AntennaSwitches;
 use longfi_device::{self, ClientEvent, LongFi, RfConfig, RfEvent};
@@ -15,20 +15,23 @@ use core::str::from_utf8;
 
 use crate::breathalyzer::{Breathalyzer, BAC};
 use crate::buzzer::Buzzer;
-//use crate::oled::Oled;
+use crate::oled::Oled;
+
 use stm32l0xx_hal as hal;
 
-#[cfg(not(debug_assertions))]
-use panic_halt as _;
+//#[cfg(not(debug_assertions))]
+//use panic_halt as _;
 
 // Debug imports
-// #[cfg(debug_assertions)]
-// extern crate panic_semihosting;
-// #[cfg(debug_assertions)]
-// use cortex_m_semihosting::hprintln;
+#[cfg(debug_assertions)]
+extern crate panic_semihosting;
+#[cfg(debug_assertions)]
+use cortex_m_semihosting::hprintln;
+
 
 use stm32l0xx_hal::{
     adc,
+    delay::Delay,
     exti::TriggerEdge,
     gpio::*,
     pac,
@@ -44,21 +47,22 @@ const APP: () = {
     struct Resources {
         #[init([0; 512])]
         BUFFER: [u8; 512], 
+        #[init(0)]
+        COUNT: u16,
+        #[init(false)]
+        BUZZER_ON: bool,
+
         EXT: pac::EXTI,
-        //BUTTON: gpioa::PA4<Input<PullUp>>,
         BUTTON: gpiob::PB2<Input<PullUp>>,
         TIMER_BREATH: timer::Timer<pac::TIM2>,
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
+        TIMER_WARM_UP: timer::Timer<pac::TIM22>,
         BREATHALYZER: Breathalyzer,
-        #[init(BAC::LOW)]
-        BREATHALYZER_RESULT: BAC,
         BUZZER: Buzzer,
-        #[init(false)]
-        BUZZER_ON: bool,
         LONGFI: LongFi,
         RADIO_EXTI: gpiob::PB4<Input<PullUp>>,
-        //OLED: Oled,
+        OLED: Oled,
     }
 
     #[init(resources = [BUFFER])]
@@ -77,7 +81,6 @@ const APP: () = {
         let gpioc = cx.device.GPIOC.split(&mut rcc);
 
         // Configure inputs
-        //let button = gpioa.pa4.into_pull_up_input();
         let button = gpiob.pb2.into_pull_up_input();
         let radio_int = gpiob.pb4.into_pull_up_input();
 
@@ -85,6 +88,7 @@ const APP: () = {
         let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
         let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
         let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 500.ms(), &mut rcc);
+        let mut tim22 = timer::Timer::tim22(cx.device.TIM22, 1000.ms(), &mut rcc);
 
         // External interrupt
         let exti = cx.device.EXTI;
@@ -106,6 +110,7 @@ const APP: () = {
 
         tim2.listen();
         tim3.listen();
+        tim22.listen();
 
         // Initialize radio.
         let radio_sck = gpiob.pb3;
@@ -159,6 +164,7 @@ const APP: () = {
 
         let sck = gpiob.pb13;
         let mosi = gpiob.pb15;
+        let mut delay = Delay::new(cx.core.SYST, rcc.clocks);
 
         // Initialise the SPI peripheral.
         let mut spi =
@@ -169,7 +175,8 @@ const APP: () = {
         // Initialize modules
         let mut buzzer = Buzzer::new(gpioa.pa3);
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
-        //let mut oled = Oled::new(spi);
+        breathalyzer.on();
+        let mut oled = Oled::new(spi, gpiob.pb8, gpiob.pb9, delay);
 
         // Return the initialised resources.
         init::LateResources {
@@ -178,11 +185,12 @@ const APP: () = {
             TIMER_BREATH: tim2,
             TIMER_PWM: tim3,
             TIMER_PWM_INTERVAL: tim21,
+            TIMER_WARM_UP: tim22,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer,
             LONGFI: longfi_radio,
-            RADIO_EXTI: radio_int
-            //OLED: oled,
+            RADIO_EXTI: radio_int,
+            OLED: oled
         }
     }
 
@@ -240,7 +248,7 @@ const APP: () = {
         }
     }
 
-    #[task(capacity = 4, priority = 2, resources = [BREATHALYZER_RESULT, LONGFI])]
+    #[task(priority = 2, resources = [LONGFI])]
     fn send_radio_message(cx: send_radio_message::Context, bac: BAC) {
         let bac_convert = match bac {
             BAC::NONE => 0,
@@ -264,7 +272,7 @@ const APP: () = {
 
 
     // Handles the button press
-    #[task(priority = 2, spawn = [send_radio_message], resources = [BUZZER, BUZZER_ON, BREATHALYZER, TIMER_PWM, TIMER_PWM_INTERVAL])]
+/*     #[task(priority = 2, spawn = [send_radio_message], resources = [BUZZER, BUZZER_ON, BREATHALYZER, TIMER_PWM, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         //hprintln!("inside button event").unwrap();
 
@@ -282,31 +290,56 @@ const APP: () = {
             TIMER_PWM.listen();
             TIMER_PWM_INTERVAL.listen();
         }
+    } */
 
-        // if cx.resources.BREATHALYZER.state {
-        //     cx.resources.BREATHALYZER.off();
-        // } else {
-        //     cx.resources.BREATHALYZER.on();
-        // }
-        
-        // Send radio message, place this wherever it is needed
-        cx.spawn.send_radio_message(BAC::LOW).unwrap();
+    // Handles the button press
+    #[task(priority = 2, spawn = [send_radio_message], resources = [BUTTON, BUZZER, BREATHALYZER, OLED, TIMER_PWM_INTERVAL])]
+    fn button_event(cx: button_event::Context) {
+        let mut value: BAC = BAC::NONE;
+
+        if cx.resources.BUZZER.enabled {
+            cx.resources.BUZZER.disable();
+            cx.resources.TIMER_PWM_INTERVAL.reset();
+            value = cx.resources.BREATHALYZER.read();
+
+            let val = match value {
+                BAC::NONE => "NONE",
+                BAC::LOW => "LOW",
+                BAC::MEDIUM => "MEDIUM",
+                BAC::HIGH => "HIGH",
+                BAC::VERY_HIGH => "VERY HIGH",
+                BAC::DEATH => "DEATH"
+            };
+            cx.resources.OLED.on(val);
+            // Send radio message, place this wherever it is needed
+            cx.spawn.send_radio_message(value).unwrap();
+        } else {
+            cx.resources.OLED.on("Reading");
+            // constant beep
+            cx.resources.BUZZER.enable();
+            cx.resources.TIMER_PWM_INTERVAL.reset();
+            cx.resources.TIMER_PWM_INTERVAL.unlisten();
+        }
+
+
     }
 
     // Polls the alcohol sensor
-    #[task(binds = TIM2, priority = 2, resources = [BREATHALYZER, TIMER_BREATH])]
+    #[task(binds = TIM2, priority = 2, resources = [TIMER_BREATH, BREATHALYZER])]
     fn sensor_poll(mut cx: sensor_poll::Context) {
         cx.resources.TIMER_BREATH.clear_irq();
+        let val = cx.resources.BREATHALYZER.read_curr();
 
-        if cx.resources.BREATHALYZER.state {
-            let value: u16 = cx.resources.BREATHALYZER.read();
+        if !(val < cx.resources.BREATHALYZER.curr_val) {
+            cx.resources.BREATHALYZER.curr_val = cx.resources.BREATHALYZER.read_curr();
         }
     }
 
     // Toggles the buzzer's PWM according to the set frequency
     #[task(binds = TIM3, resources = [BUZZER, TIMER_PWM])]
     fn buzzer_pwm(mut cx: buzzer_pwm::Context) {
-        cx.resources.TIMER_PWM.lock(|TIMER_PWM| TIMER_PWM.clear_irq());
+        //cx.resources.TIMER_PWM.lock(|TIMER_PWM| TIMER_PWM.clear_irq());
+        cx.resources.TIMER_PWM.clear_irq();
         cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_pwm());
     }
 
@@ -315,6 +348,21 @@ const APP: () = {
     fn buzzer_interval(mut cx: buzzer_interval::Context) {
         cx.resources.TIMER_PWM_INTERVAL.lock(|TIMER_PWM_INTERVAL| TIMER_PWM_INTERVAL.clear_irq());
         cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_state());
+    }
+
+    // Device warm up
+    #[task(binds = TIM22, priority = 2, resources = [OLED, BREATHALYZER, COUNT, TIMER_WARM_UP])]
+    fn warm_up(cx: warm_up::Context) {
+        cx.resources.TIMER_WARM_UP.clear_irq();
+
+        if *cx.resources.COUNT != 10 {
+            cx.resources.OLED.on("Warming up");
+            *cx.resources.COUNT += 1;
+        } else {
+            cx.resources.OLED.on("Ready");
+            cx.resources.TIMER_WARM_UP.unlisten();
+            *cx.resources.COUNT = 0;
+        }
     }
 
     // Interrupt handlers used to dispatch software tasks

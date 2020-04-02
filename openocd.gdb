@@ -5,7 +5,7 @@ target extended-remote :3333
 monitor arm semihosting enable
 
 # *try* to stop at the user entry point (it might be gone due to inlining)
-break main
+# break main
 
 # detect unhandled exceptions, hard faults and panics
 break DefaultHandler
