@@ -3,10 +3,10 @@
 
 extern crate panic_semihosting;
 
+use embedded_graphics as graphics;
 use rtfm::app;
 use ssd1306::{prelude::*, Builder};
 use stm32l0xx_hal as hal;
-use embedded_graphics as graphics;
 
 use hal::{
     delay::Delay,

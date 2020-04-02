@@ -4,41 +4,43 @@
 
 mod breathalyzer;
 mod buzzer;
-//mod oled;
+mod oled;
 
 extern crate panic_semihosting;
 
 use crate::breathalyzer::Breathalyzer;
+use crate::breathalyzer::BAC;
 use crate::buzzer::Buzzer;
-//use crate::oled::Oled;
-use cortex_m::peripheral::DWT;
-use stm32l0xx_hal as hal;
+use crate::oled::Oled;
 // hprintln is very resource demanding, only use for testing non-time critical things!
-//use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
-    adc, exti::TriggerEdge, gpio::*, pac, prelude::*, rcc::Config, spi, syscfg, timer,
     adc,
+    delay::Delay,
     exti::TriggerEdge,
     gpio::*,
     pac,
     prelude::*,
     rcc::Config,
-    spi::{self, Mode, NoMiso, Phase, Polarity},
+    spi::{self, Mode, NoMiso, Phase, Polarity, Spi},
     syscfg, timer,
 };
 
 #[rtfm::app(device = stm32l0xx_hal::pac, peripherals = true)]
 const APP: () = {
     struct Resources {
+        #[init(0)]
+        COUNT: u16,
         EXT: pac::EXTI,
         BUTTON: gpioa::PA4<Input<PullUp>>,
         TIMER_BREATH: timer::Timer<pac::TIM2>,
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
+        TIMER_WARM_UP: timer::Timer<pac::TIM22>,
         BREATHALYZER: Breathalyzer,
         BUZZER: Buzzer,
-        //OLED: Oled,
+        OLED: Oled,
     }
 
     #[init]
@@ -63,6 +65,7 @@ const APP: () = {
         let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
         let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
         let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 1000.ms(), &mut rcc);
+        let mut tim22 = timer::Timer::tim22(cx.device.TIM22, 1000.ms(), &mut rcc);
 
         // External interrupt
         let exti = cx.device.EXTI;
@@ -77,13 +80,14 @@ const APP: () = {
 
         tim2.listen();
         tim3.listen();
+        tim22.listen();
 
         // Initialize OLED
         let mut cs = gpiob.pb12.into_push_pull_output();
         cs.set_low(); // not sure if needed, did not try without it
-
         let sck = gpiob.pb13;
         let mosi = gpiob.pb15;
+        let mut delay = Delay::new(cx.core.SYST, rcc.clocks);
 
         // Initialise the SPI peripheral.
         let mut spi =
@@ -96,7 +100,7 @@ const APP: () = {
         // Initialize modules
         let mut buzzer = Buzzer::new(gpioa.pa3);
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
-        //let mut oled = Oled::new(spi);
+        let mut oled = Oled::new(spi, gpiob.pb8, gpiob.pb9, delay);
 
         // Return the initialised resources.
         init::LateResources {
@@ -105,30 +109,37 @@ const APP: () = {
             TIMER_BREATH: tim2,
             TIMER_PWM: tim3,
             TIMER_PWM_INTERVAL: tim21,
+            TIMER_WARM_UP: tim22,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer,
-            //OLED: oled,
+            OLED: oled,
         }
     }
 
     // Handles the button press
-    #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, OLED, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
+        let mut value: BAC = BAC::NONE;
 
         if cx.resources.BUZZER.enabled {
             cx.resources.BUZZER.disable();
-            cx.resources.TIMER_PWM_INTERVAL.unlisten();
+            cx.resources.TIMER_PWM_INTERVAL.reset();
+            value = cx.resources.BREATHALYZER.read();
+
+            let val = match value {
+                BAC::NONE => "NONE",
+                BAC::LOW => "LOW",
+                BAC::MEDIUM => "MEDIUM",
+                BAC::HIGH => "HIGH",
+            };
+            cx.resources.OLED.on(val);
         } else {
+            cx.resources.OLED.on("Reading");
+            // constant beep
             cx.resources.BUZZER.enable();
             cx.resources.TIMER_PWM_INTERVAL.reset();
-            cx.resources.TIMER_PWM_INTERVAL.listen();
-        }
-
-        if cx.resources.BREATHALYZER.state {
-            cx.resources.BREATHALYZER.off();
-        } else {
-            cx.resources.BREATHALYZER.on();
+            cx.resources.TIMER_PWM_INTERVAL.unlisten();
         }
     }
 
@@ -136,10 +147,10 @@ const APP: () = {
     #[task(binds = TIM2, priority = 5, resources = [BREATHALYZER, TIMER_BREATH])]
     fn sensor_poll(cx: sensor_poll::Context) {
         cx.resources.TIMER_BREATH.clear_irq();
+        let val = cx.resources.BREATHALYZER.read_curr();
 
-        if cx.resources.BREATHALYZER.state {
-            let value: u16 = cx.resources.BREATHALYZER.read();
-            //hprintln!("Value: {:#}", value).unwrap();
+        if !(val < cx.resources.BREATHALYZER.curr_val) {
+            cx.resources.BREATHALYZER.curr_val = cx.resources.BREATHALYZER.read_curr();
         }
     }
 
@@ -163,6 +174,21 @@ const APP: () = {
             cx.resources.BUZZER.disable();
         } else {
             cx.resources.BUZZER.enable();
+        }
+    }
+
+    // Device warm up
+    #[task(binds = TIM22, priority = 5, resources = [OLED, BREATHALYZER, COUNT, TIMER_WARM_UP])]
+    fn warm_up(cx: warm_up::Context) {
+        cx.resources.TIMER_WARM_UP.clear_irq();
+
+        if *cx.resources.COUNT != 10 {
+            cx.resources.OLED.on("Warming up");
+            *cx.resources.COUNT += 1;
+        } else {
+            cx.resources.OLED.on("Ready");
+            cx.resources.TIMER_WARM_UP.unlisten();
+            *cx.resources.COUNT = 0;
         }
     }
 
