@@ -7,8 +7,6 @@ mod buzzer;
 mod longfi_bindings;
 //mod oled;
 
-extern crate panic_semihosting;
-
 use longfi_bindings::AntennaSwitches;
 use longfi_device::{self, ClientEvent, LongFi, RfConfig, RfEvent};
 use communicator::{Message, Channel};
@@ -18,12 +16,16 @@ use core::str::from_utf8;
 use crate::breathalyzer::{Breathalyzer, BAC};
 use crate::buzzer::Buzzer;
 //use crate::oled::Oled;
-use cortex_m::peripheral::DWT;
 use stm32l0xx_hal as hal;
 
+#[cfg(not(debug_assertions))]
+use panic_halt as _;
+
 // Debug imports
-//#[cfg(debug_assertions)]
-//use cortex_m_semihosting::hprintln;
+// #[cfg(debug_assertions)]
+// extern crate panic_semihosting;
+// #[cfg(debug_assertions)]
+// use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
     adc,
