@@ -12,7 +12,7 @@ use stm32l0xx_hal::{
 };
 
 use embedded_graphics::{
-    fonts::{Font8x16, Font6x12, Text},
+    fonts::{Font6x12, Font8x16, Text},
     pixelcolor::BinaryColor,
     prelude::*,
     primitives::{Circle, Rectangle},
@@ -20,7 +20,6 @@ use embedded_graphics::{
 };
 
 pub struct Oled {
-    //pub spi: Spi<SPI2, (PB13<Input<Floating>>, NoMiso, PB15<Input<Floating>>)>,
     pub pb9: PB9<Output<PushPull>>,
     pub delay: Delay,
     pub disp: GraphicsMode<
@@ -63,10 +62,8 @@ impl Oled {
         }
     }
 
-
-    pub fn on(&mut self, input: &str) {
+    pub fn on(&mut self, message: &str) {
         let res = &mut self.pb9;
-        let message: &str;
 
         self.disp.reset(res, &mut self.delay).unwrap();
         self.disp.init().unwrap();
@@ -87,14 +84,8 @@ impl Oled {
 
         let t1 = Text::new("Breathalyzer", Point::new(40, 16))
             .into_styled(TextStyle::new(Font6x12, BinaryColor::On));
-            
-        if input != "" {
-            message = input;
-        } else {
-            message = "Ready";
-        }
 
-        let t2 = Text::new( message, Point::new(40, 35))
+        let t2 = Text::new(message, Point::new(40, 35))
             .into_styled(TextStyle::new(Font8x16, BinaryColor::On));
 
         t1.draw(&mut self.disp);

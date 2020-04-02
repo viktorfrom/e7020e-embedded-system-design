@@ -9,10 +9,11 @@ mod oled;
 extern crate panic_semihosting;
 
 use crate::breathalyzer::Breathalyzer;
+use crate::breathalyzer::BAC;
 use crate::buzzer::Buzzer;
 use crate::oled::Oled;
 // hprintln is very resource demanding, only use for testing non-time critical things!
-//use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
     adc,
@@ -122,37 +123,40 @@ const APP: () = {
     #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, OLED, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
+        let mut value: BAC = BAC::NONE;
 
         if cx.resources.BUZZER.enabled {
             cx.resources.BUZZER.disable();
-            cx.resources.TIMER_PWM_INTERVAL.unlisten();
+            cx.resources.TIMER_PWM_INTERVAL.reset();
+            value = cx.resources.BREATHALYZER.read();
+
+            let val = match value {
+                BAC::NONE => "NONE",
+                BAC::LOW => "LOW",
+                BAC::MEDIUM => "MEDIUM",
+                BAC::HIGH => "HIGH",
+            };
+            cx.resources.OLED.on(val);
+
         } else {
+            cx.resources.OLED.on("Reading");
+            // constant beep
             cx.resources.BUZZER.enable();
             cx.resources.TIMER_PWM_INTERVAL.reset();
-            cx.resources.TIMER_PWM_INTERVAL.listen();
+            cx.resources.TIMER_PWM_INTERVAL.unlisten();
         }
 
-        if cx.resources.BREATHALYZER.state {
-            cx.resources.BREATHALYZER.off();
-        } else {
-            cx.resources.BREATHALYZER.on();
-        }
 
-        //if cx.resources.OLED.state {
-        //    cx.resources.OLED.off();
-        //} else {
-            cx.resources.OLED.on("");
-        //}
     }
 
     // Polls the alcohol sensor
     #[task(binds = TIM2, priority = 5, resources = [BREATHALYZER, TIMER_BREATH])]
     fn sensor_poll(cx: sensor_poll::Context) {
         cx.resources.TIMER_BREATH.clear_irq();
-
-        if cx.resources.BREATHALYZER.state {
-            let value: u16 = cx.resources.BREATHALYZER.read();
-            //hprintln!("Value: {:#}", value).unwrap();
+        let val = cx.resources.BREATHALYZER.read_curr();
+ 
+        if !(val < cx.resources.BREATHALYZER.curr_val) {
+            cx.resources.BREATHALYZER.curr_val = cx.resources.BREATHALYZER.read_curr();
         }
     }
 
@@ -180,17 +184,17 @@ const APP: () = {
     }
 
     // Device warm up
-    #[task(binds = TIM22, priority = 5, resources = [OLED, COUNT, TIMER_WARM_UP])]
+    #[task(binds = TIM22, priority = 5, resources = [OLED, BREATHALYZER, COUNT, TIMER_WARM_UP])]
     fn warm_up(cx: warm_up::Context) {
         cx.resources.TIMER_WARM_UP.clear_irq();
 
         if  *cx.resources.COUNT != 10 {
             cx.resources.OLED.on("Warming up");
             *cx.resources.COUNT += 1;
-        } else {
-            cx.resources.OLED.on("");
-            *cx.resources.COUNT = 0;
+        } else {      
+            cx.resources.OLED.on("Ready");
             cx.resources.TIMER_WARM_UP.unlisten();
+            *cx.resources.COUNT = 0;
         }
 
     }
