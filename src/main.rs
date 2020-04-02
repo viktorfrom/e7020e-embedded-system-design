@@ -20,7 +20,9 @@ use crate::buzzer::Buzzer;
 //use crate::oled::Oled;
 use cortex_m::peripheral::DWT;
 use stm32l0xx_hal as hal;
-// hprintln is very resource demanding, only use for testing non-time critical things!
+
+// Debug imports
+#[cfg(debug_assertions)]
 use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
@@ -47,9 +49,11 @@ const APP: () = {
         TIMER_PWM: timer::Timer<pac::TIM3>,
         TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
         BREATHALYZER: Breathalyzer,
-        #[init(BAC::DEATH)]
+        #[init(BAC::LOW)]
         BREATHALYZER_RESULT: BAC,
         BUZZER: Buzzer,
+        #[init(false)]
+        BUZZER_ON: bool,
         LONGFI: LongFi,
         RADIO_EXTI: gpiob::PB4<Input<PullUp>>,
         //OLED: Oled,
@@ -181,7 +185,7 @@ const APP: () = {
     }
 
     // External interrupt for the button
-    #[task(binds = EXTI2_3, priority = 2, spawn = [button_event], resources = [EXT, BUTTON])]
+    #[task(binds = EXTI2_3, priority = 3, spawn = [button_event], resources = [EXT, BUTTON])]
     fn exti2_3(cx: exti2_3::Context) {
         hprintln!("EXTI2_3").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
@@ -189,7 +193,7 @@ const APP: () = {
     }
 
     // External interrupt for the radio
-    #[task(binds = EXTI4_15, priority = 2, spawn = [radio_event], resources = [EXT, RADIO_EXTI])]
+    #[task(binds = EXTI4_15, priority = 3, spawn = [radio_event], resources = [EXT, RADIO_EXTI])]
     fn exti4_15(cx: exti4_15::Context) {
         hprintln!("EXTI4_15").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.RADIO_EXTI.pin_number());
@@ -215,7 +219,7 @@ const APP: () = {
                     };
 
                     hprintln!("rx len {}", rx_packet.len).unwrap();
-;
+
                     let message = Message::deserialize(buf);
 
                     if let Some(message) = message {
@@ -245,6 +249,7 @@ const APP: () = {
             BAC::DEATH => 5
         };
 
+        // Wrap the message in a way such that ThingsBoard can handle it
         let message = Message {
             id: 6,
             data: bac_convert,
@@ -257,63 +262,57 @@ const APP: () = {
 
 
     // Handles the button press
-    #[task(priority = 2, spawn = [send_radio_message], resources = [BUTTON, EXT, BUZZER, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(priority = 2, spawn = [send_radio_message], resources = [BUZZER, BUZZER_ON, BREATHALYZER, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
         hprintln!("inside button event").unwrap();
-        if cx.resources.BUZZER.enabled {
+        if *cx.resources.BUZZER_ON {
+            *cx.resources.BUZZER_ON = false;
             cx.resources.BUZZER.disable();
             cx.resources.TIMER_PWM_INTERVAL.unlisten();
         } else {
+            *cx.resources.BUZZER_ON = true;
             cx.resources.BUZZER.enable();
             cx.resources.TIMER_PWM_INTERVAL.reset();
             cx.resources.TIMER_PWM_INTERVAL.listen();
         }
 
-        if cx.resources.BREATHALYZER.state {
-            cx.resources.BREATHALYZER.off();
-        } else {
-            cx.resources.BREATHALYZER.on();
-        }
+        // if cx.resources.BREATHALYZER.state {
+        //     cx.resources.BREATHALYZER.off();
+        // } else {
+        //     cx.resources.BREATHALYZER.on();
+        // }
 
-        cx.spawn.send_radio_message().unwrap();
+        //  cx.spawn.send_radio_message().unwrap();
     }
 
     // Polls the alcohol sensor
     #[task(binds = TIM2, priority = 2, resources = [BREATHALYZER, TIMER_BREATH])]
-    fn sensor_poll(cx: sensor_poll::Context) {
+    fn sensor_poll(mut cx: sensor_poll::Context) {
         cx.resources.TIMER_BREATH.clear_irq();
 
         if cx.resources.BREATHALYZER.state {
             let value: u16 = cx.resources.BREATHALYZER.read();
-            //hprintln!("Value: {:#}", value).unwrap();
         }
     }
 
     // Toggles the buzzer's PWM according to the set frequency
-    #[task(binds = TIM3, priority = 2, resources = [BUZZER, TIMER_PWM])]
-    fn buzzer_pwm(cx: buzzer_pwm::Context) {
+    #[task(binds = TIM3, resources = [BUZZER, TIMER_PWM])]
+    fn buzzer_pwm(mut cx: buzzer_pwm::Context) {
         cx.resources.TIMER_PWM.clear_irq();
-
-        if cx.resources.BUZZER.enabled {
-            //hprintln!("hi").unwrap();
-            cx.resources.BUZZER.toggle_pwm();
-        }
+        cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_pwm());
     }
 
     // Toggles buzzer beep intervals
-    #[task(binds = TIM21, priority = 2, resources = [BUZZER, TIMER_PWM_INTERVAL])]
-    fn buzzer_interval(cx: buzzer_interval::Context) {
-        cx.resources.TIMER_PWM_INTERVAL.clear_irq();
-
-        if cx.resources.BUZZER.enabled {
-            cx.resources.BUZZER.disable();
-        } else {
-            cx.resources.BUZZER.enable();
-        }
+    #[task(binds = TIM21, resources = [BUZZER, TIMER_PWM_INTERVAL])]
+    fn buzzer_interval(mut cx: buzzer_interval::Context) {
+        cx.resources.TIMER_PWM_INTERVAL.lock(|TIMER_PWM_INTERVAL| TIMER_PWM_INTERVAL.clear_irq());
+        cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_state());
     }
 
     // Interrupt handlers used to dispatch software tasks
     extern "C" {
+        fn USART1();
+        fn USART2();
         fn USART4_USART5();
     }
 };
