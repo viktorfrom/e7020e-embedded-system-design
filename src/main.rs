@@ -22,8 +22,8 @@ use cortex_m::peripheral::DWT;
 use stm32l0xx_hal as hal;
 
 // Debug imports
-#[cfg(debug_assertions)]
-use cortex_m_semihosting::hprintln;
+//#[cfg(debug_assertions)]
+//use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
     adc,
@@ -82,7 +82,7 @@ const APP: () = {
         // Configure timers
         let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
         let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
-        let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 1000.ms(), &mut rcc);
+        let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 500.ms(), &mut rcc);
 
         // External interrupt
         let exti = cx.device.EXTI;
@@ -187,7 +187,7 @@ const APP: () = {
     // External interrupt for the button
     #[task(binds = EXTI2_3, priority = 3, spawn = [button_event], resources = [EXT, BUTTON])]
     fn exti2_3(cx: exti2_3::Context) {
-        hprintln!("EXTI2_3").unwrap();
+        //hprintln!("EXTI2_3").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
         cx.spawn.button_event().unwrap();
     }
@@ -195,7 +195,7 @@ const APP: () = {
     // External interrupt for the radio
     #[task(binds = EXTI4_15, priority = 3, spawn = [radio_event], resources = [EXT, RADIO_EXTI])]
     fn exti4_15(cx: exti4_15::Context) {
-        hprintln!("EXTI4_15").unwrap();
+        //hprintln!("EXTI4_15").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.RADIO_EXTI.pin_number());
         cx.spawn.radio_event(RfEvent::DIO0).unwrap();
     }
@@ -207,7 +207,7 @@ const APP: () = {
 
         match client_event {
             ClientEvent::ClientEvent_TxDone => {
-                hprintln!("transmission done").unwrap();
+                //hprintln!("transmission done").unwrap();
                 longfi_radio.receive();
             },
             ClientEvent::ClientEvent_Rx => {
@@ -218,12 +218,12 @@ const APP: () = {
                         core::slice::from_raw_parts(rx_packet.buf, rx_packet.len as usize)
                     };
 
-                    hprintln!("rx len {}", rx_packet.len).unwrap();
+                    //hprintln!("rx len {}", rx_packet.len).unwrap();
 
                     let message = Message::deserialize(buf);
 
                     if let Some(message) = message {
-                        hprintln!("parse").unwrap();
+                        //hprintln!("parse").unwrap();
                         // Let's assume we only have permission to use ID 6:
                         if message.id == 6 {
                             cx.spawn.button_event().unwrap();
@@ -239,8 +239,8 @@ const APP: () = {
     }
 
     #[task(capacity = 4, priority = 2, resources = [BREATHALYZER_RESULT, LONGFI])]
-    fn send_radio_message(cx: send_radio_message::Context) {
-        let bac_convert = match cx.resources.BREATHALYZER_RESULT {
+    fn send_radio_message(cx: send_radio_message::Context, bac: BAC) {
+        let bac_convert = match bac {
             BAC::NONE => 0,
             BAC::LOW => 1,
             BAC::MEDIUM => 2,
@@ -262,18 +262,23 @@ const APP: () = {
 
 
     // Handles the button press
-    #[task(priority = 2, spawn = [send_radio_message], resources = [BUZZER, BUZZER_ON, BREATHALYZER, TIMER_PWM_INTERVAL])]
+    #[task(priority = 2, spawn = [send_radio_message], resources = [BUZZER, BUZZER_ON, BREATHALYZER, TIMER_PWM, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
-        hprintln!("inside button event").unwrap();
-        if *cx.resources.BUZZER_ON {
-            *cx.resources.BUZZER_ON = false;
-            cx.resources.BUZZER.disable();
-            cx.resources.TIMER_PWM_INTERVAL.unlisten();
+        //hprintln!("inside button event").unwrap();
+
+        let button_event::Resources {BUZZER_ON, BUZZER, BREATHALYZER, TIMER_PWM, TIMER_PWM_INTERVAL} = cx.resources;
+
+        if *BUZZER_ON {
+            *BUZZER_ON = false;
+            BUZZER.disable();
+            TIMER_PWM.unlisten();
+            TIMER_PWM_INTERVAL.unlisten();
         } else {
-            *cx.resources.BUZZER_ON = true;
-            cx.resources.BUZZER.enable();
-            cx.resources.TIMER_PWM_INTERVAL.reset();
-            cx.resources.TIMER_PWM_INTERVAL.listen();
+            *BUZZER_ON = true;
+            BUZZER.enable();
+            TIMER_PWM_INTERVAL.reset();
+            TIMER_PWM.listen();
+            TIMER_PWM_INTERVAL.listen();
         }
 
         // if cx.resources.BREATHALYZER.state {
@@ -281,8 +286,9 @@ const APP: () = {
         // } else {
         //     cx.resources.BREATHALYZER.on();
         // }
-
-        //  cx.spawn.send_radio_message().unwrap();
+        
+        // Send radio message, place this wherever it is needed
+        cx.spawn.send_radio_message(BAC::LOW);
     }
 
     // Polls the alcohol sensor
@@ -298,7 +304,7 @@ const APP: () = {
     // Toggles the buzzer's PWM according to the set frequency
     #[task(binds = TIM3, resources = [BUZZER, TIMER_PWM])]
     fn buzzer_pwm(mut cx: buzzer_pwm::Context) {
-        cx.resources.TIMER_PWM.clear_irq();
+        cx.resources.TIMER_PWM.lock(|TIMER_PWM| TIMER_PWM.clear_irq());
         cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_pwm());
     }
 
