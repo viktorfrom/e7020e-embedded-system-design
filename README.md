@@ -20,22 +20,16 @@ There is no sure way to calibrate this device as the project team does not have 
 * [LM1117IMP-ADJ voltage regulator](https://www.elfa.se/en/ldo-voltage-regulator-800ma-sot-223-texas-instruments-lm1117imp-adj-nopb/p/30019193)
 * [2x Electrolytic capacitors 10uF](https://www.elfa.se/en/aluminium-electrolytic-capacitor-10-uf-50-20-vs-panasonic-eee1ha100wr/p/30108011)
 * [2x Buttons](https://www.elfa.se/en/print-key-50-ma-12-vdc-te-connectivity-1437565/p/13566525)
-* [1x Speaker](https://www.elfa.se/en/piezo-buzzer-70-db-khz-15-murata-pkm13epyh4000-a0/p/13787082)
+* [1x Piezo buzzer](https://www.elfa.se/en/piezo-buzzer-70-db-khz-15-murata-pkm13epyh4000-a0/p/13787082)
 * [1x Antenna](https://www.elfa.se/en/micro-coaxial-straight-socket-micro-coaxial-connector-50ohm-6ghz-molex-73412-0110/p/30076410)
 
 ## Requirements
 * Rustup 1.14.0+
+* rustc 1.31.0+
+* GNU ARM embedded toolchain (check your package manager or manually install it)
+* OpenOCD
 
-## Getting started
-### Running tests
-Download and install Rustup from,
-```
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-source: https://rustup.rs
-
-## Nucleo - Installation
-The STM32 Nucleo Board requires initial setup before code can be interfaced with and eventually run code in the PCB. Nucleo software can be found at, https://docs.rust-embedded.org/discovery/index.html.
+## Setup
 
 ### rustc & cargo
 Install rustup by following the instructions at https://rustup.rs.
@@ -45,36 +39,23 @@ If you already have rustup installed double check that you are on the stable cha
 rustc -V
 rustc 1.31.0 (abe02cefd 2018-12-04)
 ```
-### itmdump 
-```
-cargo install itm --vers 0.3.1
-itmdump -V
-itmdump 0.3.1
-```
-
-### cargo-binutils
+Then install the following tools for rustup and cargo:
 ```
 rustup component add llvm-tools-preview
 ```
-
 ```
-cargo install cargo-binutils --vers 0.1.4
+rustup target add thumbv6m-none-eabi
 ```
-
 ```
-cargo size -- -version
-LLVM (http://llvm.org/):
-  LLVM version 8.0.0svn
-  Optimized build.
-  Default target: x86_64-unknown-linux-gnu
-  Host CPU: skylake
+cargo install cargo-binutils
 ```
-
-### Ubuntu / Debian
+### Linux
+Below are the packages you will need for Linux. Names might vary depending on your distrobution, you might need to install it manually if you can't find it using your distrobution's package manager.
 ```
-sudo apt-get install \
-  bluez \
-  rfkill
+openocd
+arm-none-eabi-gdb
+gcc / gcc-c++ (as well as their respective dev packages)
+llvm-8.0 (and its dev package)
 ```
 
 ### MacOS
@@ -82,20 +63,10 @@ All the tools can be install using Homebrew:
 ```
 brew cask install gcc-arm-embedded
 
-brew install minicom openocd
-```
-Navigate to the cargo config file in the Nucleo folder,
-```
-cd .config
-vim config
-```
-and make sure the following lines are uncommented,
-```
-runner = "arm-none-eabi-gdb -q -x openocd.gdb"
-target = "thumbv7em-none-eabihf" # Cortex-M4F and Cortex-M7F (with FPU)
+brew install openocd
 ```
 
-### Build it
+## Build instructions
 For the F3, we'll to use the thumbv7em-none-eabihf target. Before cross compiling you have to download pre-compiled version of the standard library (a reduced version of it actually) for your target. That's done using rustup:
 ```
 rustup target add thumbv7em-none-eabihf
