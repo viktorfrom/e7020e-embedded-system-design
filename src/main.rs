@@ -67,7 +67,6 @@ const APP: () = {
         let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 1000.ms(), &mut rcc);
         let mut tim22 = timer::Timer::tim22(cx.device.TIM22, 1000.ms(), &mut rcc);
 
-
         // External interrupt
         let exti = cx.device.EXTI;
 
@@ -103,8 +102,6 @@ const APP: () = {
         let mut breathalyzer = Breathalyzer::new(gpioa.pa5, gpioa.pa2, adc);
         let mut oled = Oled::new(spi, gpiob.pb8, gpiob.pb9, delay);
 
-
-
         // Return the initialised resources.
         init::LateResources {
             EXT: exti,
@@ -118,7 +115,7 @@ const APP: () = {
             OLED: oled,
         }
     }
- 
+
     // Handles the button press
     #[task(binds = EXTI4_15, priority = 5, resources = [BUTTON, EXT, BUZZER, BREATHALYZER, OLED, TIMER_PWM_INTERVAL])]
     fn button_event(cx: button_event::Context) {
@@ -137,7 +134,6 @@ const APP: () = {
                 BAC::HIGH => "HIGH",
             };
             cx.resources.OLED.on(val);
-
         } else {
             cx.resources.OLED.on("Reading");
             // constant beep
@@ -145,8 +141,6 @@ const APP: () = {
             cx.resources.TIMER_PWM_INTERVAL.reset();
             cx.resources.TIMER_PWM_INTERVAL.unlisten();
         }
-
-
     }
 
     // Polls the alcohol sensor
@@ -154,7 +148,7 @@ const APP: () = {
     fn sensor_poll(cx: sensor_poll::Context) {
         cx.resources.TIMER_BREATH.clear_irq();
         let val = cx.resources.BREATHALYZER.read_curr();
- 
+
         if !(val < cx.resources.BREATHALYZER.curr_val) {
             cx.resources.BREATHALYZER.curr_val = cx.resources.BREATHALYZER.read_curr();
         }
@@ -188,15 +182,14 @@ const APP: () = {
     fn warm_up(cx: warm_up::Context) {
         cx.resources.TIMER_WARM_UP.clear_irq();
 
-        if  *cx.resources.COUNT != 10 {
+        if *cx.resources.COUNT != 10 {
             cx.resources.OLED.on("Warming up");
             *cx.resources.COUNT += 1;
-        } else {      
+        } else {
             cx.resources.OLED.on("Ready");
             cx.resources.TIMER_WARM_UP.unlisten();
             *cx.resources.COUNT = 0;
         }
-
     }
 
     // Interrupt handlers used to dispatch software tasks

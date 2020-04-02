@@ -53,11 +53,11 @@ impl Breathalyzer {
         let val: u16 = self.adc.read(&mut self.dat).unwrap();
         //hprintln!("{:#} / {:#} = {:#}", val, self.curr_val, (val * 100) / self.curr_val).unwrap();
 
-        if ((val * 100) / self.curr_val) >= 90  {
+        if ((val * 100) / self.curr_val) >= 90 {
             return BAC::LOW;
-        } else if ((val * 100)  / self.curr_val) >= 80 {
+        } else if ((val * 100) / self.curr_val) >= 80 {
             return BAC::MEDIUM;
-        } else if ((val * 100)  / self.curr_val) >= 65  {
+        } else if ((val * 100) / self.curr_val) >= 65 {
             return BAC::HIGH;
         } else {
             return BAC::NONE;
@@ -69,5 +69,4 @@ impl Breathalyzer {
         let value: u16 = self.adc.read(&mut self.dat).unwrap();
         return value;
     }
-    
 }
