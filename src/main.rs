@@ -51,12 +51,16 @@ const APP: () = {
         COUNT: u16,
         #[init(false)]
         BUZZER_ON: bool,
+        #[init(false)]
+        MEASURING: bool,
+        #[init(0)]
+        TIME_COUNTER: u16,
 
         EXT: pac::EXTI,
         BUTTON: gpiob::PB2<Input<PullUp>>,
         TIMER_BREATH: timer::Timer<pac::TIM2>,
         TIMER_PWM: timer::Timer<pac::TIM3>,
-        TIMER_PWM_INTERVAL: timer::Timer<pac::TIM21>,
+        TIMER_SEC: timer::Timer<pac::TIM21>,
         TIMER_WARM_UP: timer::Timer<pac::TIM22>,
         BREATHALYZER: Breathalyzer,
         BUZZER: Buzzer,
@@ -87,7 +91,7 @@ const APP: () = {
         // Configure timers
         let mut tim2 = timer::Timer::tim2(cx.device.TIM2, 1000.ms(), &mut rcc);
         let mut tim3 = timer::Timer::tim3(cx.device.TIM3, 1000.hz(), &mut rcc);
-        let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 500.ms(), &mut rcc);
+        let mut tim21 = timer::Timer::tim21(cx.device.TIM21, 1000.ms(), &mut rcc);
         let mut tim22 = timer::Timer::tim22(cx.device.TIM22, 1000.ms(), &mut rcc);
 
         // External interrupt
@@ -110,6 +114,7 @@ const APP: () = {
 
         tim2.listen();
         tim3.listen();
+        tim21.listen();
         tim22.listen();
 
         // Initialize radio.
@@ -178,26 +183,28 @@ const APP: () = {
         breathalyzer.on();
         let mut oled = Oled::new(spi, gpiob.pb8, gpiob.pb9, delay);
 
+        let test: f32 = 0.5;
+
         // Return the initialised resources.
         init::LateResources {
             EXT: exti,
             BUTTON: button,
             TIMER_BREATH: tim2,
             TIMER_PWM: tim3,
-            TIMER_PWM_INTERVAL: tim21,
+            TIMER_SEC: tim21,
             TIMER_WARM_UP: tim22,
             BREATHALYZER: breathalyzer,
             BUZZER: buzzer,
             LONGFI: longfi_radio,
             RADIO_EXTI: radio_int,
-            OLED: oled
+            OLED: oled,
         }
     }
 
     // External interrupt for the button
     #[task(binds = EXTI2_3, priority = 3, spawn = [button_event], resources = [EXT, BUTTON])]
     fn exti2_3(cx: exti2_3::Context) {
-        //hprintln!("EXTI2_3").unwrap();
+        hprintln!("exti2_3").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
         cx.spawn.button_event().unwrap();
     }
@@ -205,7 +212,7 @@ const APP: () = {
     // External interrupt for the radio
     #[task(binds = EXTI4_15, priority = 3, spawn = [radio_event], resources = [EXT, RADIO_EXTI])]
     fn exti4_15(cx: exti4_15::Context) {
-        //hprintln!("EXTI4_15").unwrap();
+        hprintln!("exti4_15").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.RADIO_EXTI.pin_number());
         cx.spawn.radio_event(RfEvent::DIO0).unwrap();
     }
@@ -217,7 +224,6 @@ const APP: () = {
 
         match client_event {
             ClientEvent::ClientEvent_TxDone => {
-                //hprintln!("transmission done").unwrap();
                 longfi_radio.receive();
             },
             ClientEvent::ClientEvent_Rx => {
@@ -228,13 +234,11 @@ const APP: () = {
                         core::slice::from_raw_parts(rx_packet.buf, rx_packet.len as usize)
                     };
 
-                    //hprintln!("rx len {}", rx_packet.len).unwrap();
-
                     let message = Message::deserialize(buf);
 
                     if let Some(message) = message {
-                        //hprintln!("parse").unwrap();
                         // Let's assume we only have permission to use ID 6:
+                        hprintln!("hi").unwrap();
                         if message.id == 6 {
                             cx.spawn.button_event().unwrap();
                         }
@@ -270,58 +274,36 @@ const APP: () = {
         cx.resources.LONGFI.send(&binary);
     }
 
-
     // Handles the button press
-/*     #[task(priority = 2, spawn = [send_radio_message], resources = [BUZZER, BUZZER_ON, BREATHALYZER, TIMER_PWM, TIMER_PWM_INTERVAL])]
-    fn button_event(cx: button_event::Context) {
-        //hprintln!("inside button event").unwrap();
-
-        let button_event::Resources {BUZZER_ON, BUZZER, BREATHALYZER, TIMER_PWM, TIMER_PWM_INTERVAL} = cx.resources;
-
-        if *BUZZER_ON {
-            *BUZZER_ON = false;
-            BUZZER.disable();
-            TIMER_PWM.unlisten();
-            TIMER_PWM_INTERVAL.unlisten();
-        } else {
-            *BUZZER_ON = true;
-            BUZZER.enable();
-            TIMER_PWM_INTERVAL.reset();
-            TIMER_PWM.listen();
-            TIMER_PWM_INTERVAL.listen();
-        }
-    } */
-
-    // Handles the button press
-    #[task(priority = 2, spawn = [send_radio_message], resources = [BUTTON, BUZZER, BREATHALYZER, OLED, TIMER_PWM_INTERVAL])]
+    #[task(priority = 2, spawn = [send_radio_message], resources = [BUTTON, BUZZER, BREATHALYZER, OLED, MEASURING, TIMER_SEC])]
     fn button_event(cx: button_event::Context) {
         let mut value: BAC = BAC::NONE;
 
-        if cx.resources.BUZZER.enabled {
-            cx.resources.BUZZER.disable();
-            cx.resources.TIMER_PWM_INTERVAL.reset();
-            value = cx.resources.BREATHALYZER.read();
+        if !*cx.resources.MEASURING {
+            if cx.resources.BUZZER.enabled {
+                cx.resources.BUZZER.disable();
+                value = cx.resources.BREATHALYZER.read();
 
-            let val = match value {
-                BAC::NONE => "NONE",
-                BAC::LOW => "LOW",
-                BAC::MEDIUM => "MEDIUM",
-                BAC::HIGH => "HIGH",
-                BAC::VERY_HIGH => "VERY HIGH",
-                BAC::DEATH => "DEATH"
-            };
-            cx.resources.OLED.on(val);
-            // Send radio message, place this wherever it is needed
-            cx.spawn.send_radio_message(value).unwrap();
-        } else {
-            cx.resources.OLED.on("Reading");
-            // constant beep
-            cx.resources.BUZZER.enable();
-            cx.resources.TIMER_PWM_INTERVAL.reset();
-            cx.resources.TIMER_PWM_INTERVAL.unlisten();
+                let val = match value {
+                    BAC::NONE => "NONE",
+                    BAC::LOW => "LOW",
+                    BAC::MEDIUM => "MEDIUM",
+                    BAC::HIGH => "HIGH",
+                    BAC::VERY_HIGH => "VERY HIGH",
+                    BAC::DEATH => "DEATH"
+                };
+                cx.resources.OLED.on(val);
+
+                // Send radio message, place this wherever it is needed
+                cx.spawn.send_radio_message(value).unwrap();
+            } else {
+                cx.resources.OLED.on("Reading");
+                // constant beep
+                cx.resources.BUZZER.enable();
+                cx.resources.TIMER_SEC.listen();
+                *cx.resources.MEASURING = true;
+            }
         }
-
-
     }
 
     // Polls the alcohol sensor
@@ -338,16 +320,33 @@ const APP: () = {
     // Toggles the buzzer's PWM according to the set frequency
     #[task(binds = TIM3, resources = [BUZZER, TIMER_PWM])]
     fn buzzer_pwm(mut cx: buzzer_pwm::Context) {
-        //cx.resources.TIMER_PWM.lock(|TIMER_PWM| TIMER_PWM.clear_irq());
         cx.resources.TIMER_PWM.clear_irq();
         cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_pwm());
     }
 
-    // Toggles buzzer beep intervals
-    #[task(binds = TIM21, resources = [BUZZER, TIMER_PWM_INTERVAL])]
-    fn buzzer_interval(mut cx: buzzer_interval::Context) {
-        cx.resources.TIMER_PWM_INTERVAL.lock(|TIMER_PWM_INTERVAL| TIMER_PWM_INTERVAL.clear_irq());
-        cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_state());
+    #[task(binds = TIM21, spawn = [button_event], resources = [BUZZER, TIME_COUNTER, TIMER_SEC, MEASURING])]
+    fn stop_measuring(mut cx: stop_measuring::Context) {
+        cx.resources.TIMER_SEC.lock(|TIMER_SEC| TIMER_SEC.clear_irq());
+        let mut measuring: bool = cx.resources.MEASURING.lock(|MEASURING| return *MEASURING);
+        let mut counter: u16 = *cx.resources.TIME_COUNTER;
+        let mut complete: bool = false;
+
+        if measuring {
+            if counter >= 3 {
+                cx.resources.MEASURING.lock(|MEASURING| {
+                    *MEASURING = false;
+                });
+                complete = true;
+            } else {
+                counter += 1;
+                *cx.resources.TIME_COUNTER = counter;
+            }
+        }
+
+        if complete {
+            *cx.resources.TIME_COUNTER = 0;
+            cx.spawn.button_event().unwrap();
+        }
     }
 
     // Device warm up
