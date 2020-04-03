@@ -1,6 +1,9 @@
 # E7020E Embedded System Design
 Project designed and written in Rust in conjunction with the E7020E Embedded System Design course at Luleå University of Technology. 
 
+![alt text](https://i.imgur.com/0GIBFLA.jpg)
+
+
 ## Project description
 The purpose of this project is to create a breathalyzer to estimate the blood alchohol content (BAC) in a person's breath. 
 To do this a prototype PCB will be designed connected to an alchohol sensor, a button to start the breathalyzer and a small display to show the alchohol permille detected. Over LoRa this device will also alert a ThinkBoard server that this user's breath contains too much alchohol, i.e. they are about to pass out. 
@@ -28,6 +31,8 @@ There is no sure way to calibrate this device as the project team does not have 
 * rustc 1.31.0+ (stable)
 * GNU ARM embedded toolchain (check your package manager or manually install it)
 * OpenOCD
+* Nucleo dev board (in programming mode)
+* Breathalyzer PCB
 
 ## Setup
 
@@ -61,6 +66,8 @@ brew cask install gcc-arm-embedded
 
 brew install openocd
 ```
+## PCB
+The design of the breathalyzer can be found in _/pcbdesign_. It was created and can be opened with KiCad. The program has been written especially for that design.
 
 ## Build instructions
 First confirm that the correct runner is chosen in _.cargo/config_, as the gdb package name might be different depending on you OS. Then build the project
@@ -75,7 +82,7 @@ openocd -f openocd.cfg
 ```
 Then build the project and flash the card
 ```
-cargo run --features="radio"
+cargo run --features="radio" --release
 ```
 
 ## Authors
