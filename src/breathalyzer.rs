@@ -1,4 +1,4 @@
-// use cortex_m_semihosting::hprintln;
+//use cortex_m_semihosting::hprintln;
 
 use stm32l0xx_hal::{
     adc::Adc,
