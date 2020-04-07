@@ -55,6 +55,8 @@ const APP: () = {
         MEASURING: bool,
         #[init(0)]
         TIME_COUNTER: u16,
+        #[init(true)]
+        WARM_UP: bool,
 
         EXT: pac::EXTI,
         BUTTON: gpiob::PB2<Input<PullUp>>,
@@ -202,19 +204,25 @@ const APP: () = {
     }
 
     // External interrupt for the button
-    #[task(binds = EXTI2_3, priority = 3, spawn = [button_event], resources = [EXT, BUTTON])]
+    #[task(binds = EXTI2_3, priority = 2, spawn = [button_event], resources = [EXT, BUTTON, WARM_UP])]
     fn exti2_3(cx: exti2_3::Context) {
-        hprintln!("exti2_3").unwrap();
+        //hprintln!("exti2_3").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.BUTTON.pin_number());
-        cx.spawn.button_event().unwrap();
+
+        if !*cx.resources.WARM_UP {
+            cx.spawn.button_event().unwrap();
+        }
     }
 
     // External interrupt for the radio
-    #[task(binds = EXTI4_15, priority = 3, spawn = [radio_event], resources = [EXT, RADIO_EXTI])]
+    #[task(binds = EXTI4_15, priority = 2, spawn = [radio_event], resources = [EXT, RADIO_EXTI, WARM_UP])]
     fn exti4_15(cx: exti4_15::Context) {
-        hprintln!("exti4_15").unwrap();
+        //hprintln!("exti4_15").unwrap();
         cx.resources.EXT.clear_irq(cx.resources.RADIO_EXTI.pin_number());
-        cx.spawn.radio_event(RfEvent::DIO0).unwrap();
+
+        if !*cx.resources.WARM_UP {
+            cx.spawn.radio_event(RfEvent::DIO0).unwrap();
+        }
     }
 
     #[task(capacity = 4, priority = 2, spawn = [button_event], resources = [BUFFER, LONGFI])]
@@ -238,7 +246,6 @@ const APP: () = {
 
                     if let Some(message) = message {
                         // Let's assume we only have permission to use ID 6:
-                        hprintln!("hi").unwrap();
                         if message.id == 6 {
                             cx.spawn.button_event().unwrap();
                         }
@@ -277,12 +284,10 @@ const APP: () = {
     // Handles the button press
     #[task(priority = 2, spawn = [send_radio_message], resources = [BUTTON, BUZZER, BREATHALYZER, OLED, MEASURING, TIMER_SEC])]
     fn button_event(cx: button_event::Context) {
-        let mut value: BAC = BAC::NONE;
-
         if !*cx.resources.MEASURING {
             if cx.resources.BUZZER.enabled {
                 cx.resources.BUZZER.disable();
-                value = cx.resources.BREATHALYZER.read();
+                let mut value: BAC = cx.resources.BREATHALYZER.read();
 
                 let val = match value {
                     BAC::NONE => "NONE",
@@ -318,10 +323,10 @@ const APP: () = {
     }
 
     // Toggles the buzzer's PWM according to the set frequency
-    #[task(binds = TIM3, resources = [BUZZER, TIMER_PWM])]
+    #[task(binds = TIM3, priority = 2, resources = [BUZZER, TIMER_PWM])]
     fn buzzer_pwm(mut cx: buzzer_pwm::Context) {
         cx.resources.TIMER_PWM.clear_irq();
-        cx.resources.BUZZER.lock(|BUZZER| BUZZER.toggle_pwm());
+        cx.resources.BUZZER.toggle_pwm();
     }
 
     #[task(binds = TIM21, spawn = [button_event], resources = [BUZZER, TIME_COUNTER, TIMER_SEC, MEASURING])]
@@ -350,7 +355,7 @@ const APP: () = {
     }
 
     // Device warm up
-    #[task(binds = TIM22, priority = 2, resources = [OLED, BREATHALYZER, COUNT, TIMER_WARM_UP])]
+    #[task(binds = TIM22, priority = 2, resources = [OLED, BREATHALYZER, COUNT, TIMER_WARM_UP, WARM_UP])]
     fn warm_up(cx: warm_up::Context) {
         cx.resources.TIMER_WARM_UP.clear_irq();
 
@@ -361,6 +366,7 @@ const APP: () = {
             cx.resources.OLED.on("Ready");
             cx.resources.TIMER_WARM_UP.unlisten();
             *cx.resources.COUNT = 0;
+            *cx.resources.WARM_UP = false;
         }
     }
 
